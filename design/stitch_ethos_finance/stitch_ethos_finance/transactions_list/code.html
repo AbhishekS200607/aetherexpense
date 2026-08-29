@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Transactions</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#474746",
+                        "outline": "#747878",
+                        "on-tertiary-container": "#7671ff",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "tertiary-container": "#0f0069",
+                        "inverse-primary": "#c8c6c5",
+                        "on-surface-variant": "#444748",
+                        "error": "#ba1a1a",
+                        "surface-bright": "#fdf8f8",
+                        "tertiary": "#000000",
+                        "primary-fixed": "#e5e2e1",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#e3e2e2",
+                        "primary-container": "#1c1b1b",
+                        "surface-tint": "#5f5e5e",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#f4f0ef",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "inverse-surface": "#313030",
+                        "surface-variant": "#e5e2e1",
+                        "on-primary-fixed": "#1c1b1b",
+                        "surface-container-high": "#ebe7e6",
+                        "on-secondary-container": "#646464",
+                        "outline-variant": "#c4c7c7",
+                        "secondary-fixed-dim": "#c7c6c6",
+                        "on-primary-container": "#858383",
+                        "on-surface": "#1c1b1b",
+                        "surface": "#fdf8f8",
+                        "surface-dim": "#ddd9d8",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-background": "#1c1b1b",
+                        "tertiary-fixed-dim": "#c3c0ff",
+                        "on-secondary-fixed-variant": "#464747",
+                        "primary": "#000000",
+                        "on-error": "#ffffff",
+                        "surface-container-low": "#f7f3f2",
+                        "on-tertiary-fixed-variant": "#3323cc",
+                        "secondary": "#5e5e5e",
+                        "surface-container-highest": "#e5e2e1",
+                        "on-tertiary-fixed": "#0f0069",
+                        "background": "#fdf8f8",
+                        "tertiary-fixed": "#e2dfff",
+                        "surface-container": "#f1edec",
+                        "secondary-fixed": "#e3e2e2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-lg": "32px",
+                        "stack-md": "16px",
+                        "unit": "8px",
+                        "stack-sm": "8px",
+                        "container-padding": "24px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "display-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-lg-mobile": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["72px", { "lineHeight": "80px", "letterSpacing": "-0.04em", "fontWeight": "200" }],
+                        "display-md": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "300" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "34px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #F9F9F8; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="text-on-background font-body-md antialiased pb-24">
+<!-- Top App Bar -->
+<header class="bg-surface dark:bg-surface font-headline-lg-mobile text-headline-lg-mobile flex justify-between items-center px-container-padding py-stack-md w-full sticky top-0 z-40">
+<div class="flex items-center gap-gutter hover:opacity-80 transition-opacity cursor-pointer">
+<img class="w-10 h-10 rounded-full border border-outline-variant object-cover" data-alt="A small, circular, minimalist profile avatar placeholder featuring a soft geometric pattern in grayscale tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqb_HiXgjyQpneyQX42NXND0fK2XvWOAUb6tu-B_57pwwhb9OxT8G0qbFSrSQksY2xo3i90fdkfWhkFOH_oBFA7XkMOKuBto0cMNk4lN_jCRFh-ilPhRc-cIbUe--s8vKyltXwCNIIHdhJvP2E1CZvxMSGn0wlUQ2oj6LzdtdG6TRh1OjT93bAHj9NkiE5O8YYIKGmX8iXAV_p8xDZ9f0FE8x-cnF83LQM74WeBVqNYXDTeJo38smu"/>
+</div>
+<div class="font-display-md text-display-md font-light text-primary dark:text-on-surface">Transactions</div>
+<div class="flex items-center gap-gutter text-primary dark:text-on-surface hover:opacity-80 transition-opacity cursor-pointer">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</div>
+</header>
+<main class="px-container-padding py-stack-lg max-w-md mx-auto md:max-w-2xl">
+<!-- Summary Section -->
+<section class="mb-stack-lg">
+<div class="flex justify-between items-end mb-unit">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">August 2026</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-container-padding">
+<div class="font-label-md text-label-md text-on-surface-variant mb-unit">Total spent</div>
+<div class="font-display-md text-display-md text-primary">₹7,550</div>
+</div>
+</section>
+<!-- Controls -->
+<section class="flex justify-between items-center mb-stack-md">
+<div class="flex gap-unit">
+<button class="bg-surface-container-lowest border border-outline-variant rounded-full px-4 py-2 font-label-md text-label-md text-on-surface flex items-center gap-2 hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="search">search</span> Search
+                </button>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="tune">tune</span>
+</button>
+</section>
+<!-- Transactions List -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden">
+<!-- Today Group -->
+<div class="bg-surface-container-low px-container-padding py-2 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">
+                Today
+            </div>
+<!-- Item 1 -->
+<div class="flex items-center justify-between p-container-padding border-b border-outline-variant hover:bg-surface-container-low transition-colors cursor-pointer pl-[48px]">
+<div class="flex items-center gap-gutter">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+</div>
+<div>
+<div class="font-body-lg text-body-lg text-on-surface">Swiggy</div>
+<div class="font-label-md text-label-md text-on-surface-variant">Food &amp; Dining</div>
+</div>
+</div>
+<div class="font-body-lg text-body-lg text-on-surface text-right">
+                    -₹420
+                </div>
+</div>
+<!-- Item 2 -->
+<div class="flex items-center justify-between p-container-padding border-b border-outline-variant hover:bg-surface-container-low transition-colors cursor-pointer pl-[48px]">
+<div class="flex items-center gap-gutter">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="local_taxi">local_taxi</span>
+</div>
+<div>
+<div class="font-body-lg text-body-lg text-on-surface">Uber</div>
+<div class="font-label-md text-label-md text-on-surface-variant">Transport</div>
+</div>
+</div>
+<div class="font-body-lg text-body-lg text-on-surface text-right">
+                    -₹280
+                </div>
+</div>
+<!-- Yesterday Group -->
+<div class="bg-surface-container-low px-container-padding py-2 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">
+                Yesterday
+            </div>
+<!-- Item 3 -->
+<div class="flex items-center justify-between p-container-padding border-b border-outline-variant hover:bg-surface-container-low transition-colors cursor-pointer pl-[48px]">
+<div class="flex items-center gap-gutter">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="movie">movie</span>
+</div>
+<div>
+<div class="font-body-lg text-body-lg text-on-surface">Netflix</div>
+<div class="font-label-md text-label-md text-on-surface-variant">Entertainment</div>
+</div>
+</div>
+<div class="font-body-lg text-body-lg text-on-surface text-right">
+                    -₹649
+                </div>
+</div>
+<!-- Item 4 -->
+<div class="flex items-center justify-between p-container-padding hover:bg-surface-container-low transition-colors cursor-pointer pl-[48px]">
+<div class="flex items-center gap-gutter">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="account_balance">account_balance</span>
+</div>
+<div>
+<div class="font-body-lg text-body-lg text-on-surface">Salary</div>
+<div class="font-label-md text-label-md text-on-surface-variant">Income</div>
+</div>
+</div>
+<div class="font-body-lg text-body-lg text-primary text-right">
+                    +₹30,000
+                </div>
+</div>
+</section>
+</main>
+<!-- Bottom Nav Bar -->
+<nav class="bg-surface-container-lowest dark:bg-surface-container-lowest fixed bottom-0 w-full z-50 rounded-t-xl border-t border-outline-variant dark:border-outline shadow-sm md:hidden">
+<ul class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-container-padding py-4 font-label-sm text-label-sm">
+<li class="flex flex-col items-center gap-1 cursor-pointer text-outline dark:text-outline-variant hover:text-primary dark:hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</li>
+<li class="flex flex-col items-center gap-1 cursor-pointer text-primary dark:text-on-surface scale-110 hover:text-primary dark:hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet" data-weight="fill" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+</li>
+<li class="flex flex-col items-center gap-1 cursor-pointer text-outline dark:text-outline-variant hover:text-primary dark:hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+</li>
+<li class="flex flex-col items-center gap-1 cursor-pointer text-outline dark:text-outline-variant hover:text-primary dark:hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+</li>
+<li class="flex flex-col items-center gap-1 cursor-pointer text-outline dark:text-outline-variant hover:text-primary dark:hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</li>
+</ul>
+</nav>
+</body></html>

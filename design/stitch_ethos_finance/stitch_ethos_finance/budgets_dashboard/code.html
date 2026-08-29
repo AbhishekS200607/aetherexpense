@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Budgets</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-primary-fixed-variant": "#474746",
+                        "outline": "#747878",
+                        "on-tertiary-container": "#7671ff",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "tertiary-container": "#0f0069",
+                        "inverse-primary": "#c8c6c5",
+                        "on-surface-variant": "#444748",
+                        "error": "#ba1a1a",
+                        "surface-bright": "#fdf8f8",
+                        "tertiary": "#000000",
+                        "primary-fixed": "#e5e2e1",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#e3e2e2",
+                        "primary-container": "#1c1b1b",
+                        "surface-tint": "#5f5e5e",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#f4f0ef",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "inverse-surface": "#313030",
+                        "surface-variant": "#e5e2e1",
+                        "on-primary-fixed": "#1c1b1b",
+                        "surface-container-high": "#ebe7e6",
+                        "on-secondary-container": "#646464",
+                        "outline-variant": "#c4c7c7",
+                        "secondary-fixed-dim": "#c7c6c6",
+                        "on-primary-container": "#858383",
+                        "on-surface": "#1c1b1b",
+                        "surface": "#fdf8f8",
+                        "surface-dim": "#ddd9d8",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-background": "#1c1b1b",
+                        "tertiary-fixed-dim": "#c3c0ff",
+                        "on-secondary-fixed-variant": "#464747",
+                        "primary": "#000000",
+                        "on-error": "#ffffff",
+                        "surface-container-low": "#f7f3f2",
+                        "on-tertiary-fixed-variant": "#3323cc",
+                        "secondary": "#5e5e5e",
+                        "surface-container-highest": "#e5e2e1",
+                        "on-tertiary-fixed": "#0f0069",
+                        "background": "#fdf8f8",
+                        "tertiary-fixed": "#e2dfff",
+                        "surface-container": "#f1edec",
+                        "secondary-fixed": "#e3e2e2"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "stack-lg": "32px",
+                        "stack-md": "16px",
+                        "unit": "8px",
+                        "stack-sm": "8px",
+                        "container-padding": "24px",
+                        "gutter": "16px"
+                    },
+                    fontFamily: {
+                        "display-lg": ["Inter"],
+                        "display-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-lg-mobile": ["Inter"]
+                    },
+                    fontSize: {
+                        "display-lg": ["72px", { "lineHeight": "80px", "letterSpacing": "-0.04em", "fontWeight": "200" }],
+                        "display-md": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "300" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "34px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #F9F9F8; /* Using explicit off-white requested in style guide for background */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hairline-border {
+            border: 1px solid #E5E5E5;
+        }
+        .hairline-bottom {
+            border-bottom: 1px solid #E5E5E5;
+        }
+    </style>
+</head>
+<body class="text-on-surface min-h-screen pb-24 flex flex-col items-center">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface text-primary dark:text-on-surface docked full-width top-0 sticky z-40 flex justify-between items-center px-container-padding py-stack-md w-full max-w-2xl mx-auto">
+<div class="flex items-center gap-stack-md">
+<!-- Leading Avatar -->
+<div class="w-10 h-10 rounded-full overflow-hidden hairline-border bg-surface-container-highest flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
+<img alt="Profile Photo" class="w-full h-full object-cover" data-alt="A sophisticated black and white portrait of a person in a minimalist setting. High contrast, clean modern lighting. Professional editorial style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGHlfMv9xnFfKCHHXe9EQSgWHMcfl1_flnxK5PzkRbgoRqB-kOe2PL3B_h_5p3ffQfFULXivf47yakl7p7I6fU2NsGiWIBaYm0FabsyZk0R3eQGISTcvkJI9PDv_ch__akKC4j_0pE-B5LG5zptVQO-HGGam9IVsqIoMAHLfIr_FM0nT-chh49ur9jAnZshWUqrTgCRfBBMtax81fGyCRdtWapY3l0jjpTbN_WvBS1meDdrz79vfTP"/>
+</div>
+<!-- Headline -->
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg font-bold tracking-tight">Budgets</h1>
+</div>
+<!-- Trailing Icon -->
+<button aria-label="Search" class="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center p-2 rounded-full hover:bg-surface-container-highest active:scale-95 duration-150">
+<span class="material-symbols-outlined text-[24px]">search</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="w-full max-w-2xl mx-auto px-container-padding flex flex-col gap-stack-lg mt-stack-md">
+<!-- Primary Card: Monthly Budget Overview -->
+<section class="bg-surface-container-lowest hairline-border rounded-xl p-container-padding flex flex-col gap-stack-md relative overflow-hidden group hover:border-outline-variant transition-colors">
+<div class="flex justify-between items-baseline mb-unit">
+<h2 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest">Monthly Budget</h2>
+<span class="font-label-sm text-label-sm bg-surface-container-high text-on-surface-variant px-2 py-1 rounded-full">April 2024</span>
+</div>
+<div class="flex items-end justify-between">
+<div>
+<p class="font-display-md text-display-md font-light text-primary tracking-tight">₹15,000</p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Total Allocated</p>
+</div>
+</div>
+<!-- Progress Bar Area -->
+<div class="mt-stack-md flex flex-col gap-unit">
+<div class="flex justify-between font-label-md text-label-md">
+<span class="text-on-surface">Spent ₹7,550</span>
+<span class="text-on-surface-variant">Left ₹7,450</span>
+</div>
+<!-- Thin Progress Bar (50% filled) -->
+<div class="h-[4px] w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full transition-all duration-1000 ease-in-out" style="width: 50.3%;"></div>
+</div>
+</div>
+</section>
+<!-- Category Breakdown List -->
+<section class="flex flex-col gap-stack-md">
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg font-medium text-primary tracking-tight mb-2">Categories</h3>
+<div class="bg-surface-container-lowest hairline-border rounded-xl overflow-hidden flex flex-col">
+<!-- Category Item 1: Food (Normal) -->
+<div class="p-4 md:p-6 hairline-bottom flex flex-col gap-stack-sm hover:bg-surface-container transition-colors cursor-pointer">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-stack-sm">
+<span class="material-symbols-outlined text-on-surface-variant">restaurant</span>
+<span class="font-body-lg text-body-lg text-primary">Food</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">61%</span>
+</div>
+<div class="flex justify-between items-baseline pl-9">
+<span class="font-label-md text-label-md text-on-surface">₹2,450 <span class="text-on-surface-variant font-normal">/ ₹4,000</span></span>
+</div>
+<div class="pl-9 mt-1">
+<div class="h-[2px] w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 61.25%;"></div>
+</div>
+</div>
+</div>
+<!-- Category Item 2: Transport (Normal) -->
+<div class="p-4 md:p-6 hairline-bottom flex flex-col gap-stack-sm hover:bg-surface-container transition-colors cursor-pointer">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-stack-sm">
+<span class="material-symbols-outlined text-on-surface-variant">commute</span>
+<span class="font-body-lg text-body-lg text-primary">Transport</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">60%</span>
+</div>
+<div class="flex justify-between items-baseline pl-9">
+<span class="font-label-md text-label-md text-on-surface">₹1,200 <span class="text-on-surface-variant font-normal">/ ₹2,000</span></span>
+</div>
+<div class="pl-9 mt-1">
+<div class="h-[2px] w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 60%;"></div>
+</div>
+</div>
+</div>
+<!-- Category Item 3: Shopping (Warning State) -->
+<div class="p-4 md:p-6 flex flex-col gap-stack-sm hover:bg-surface-container transition-colors cursor-pointer relative overflow-hidden">
+<!-- Subtle warning background tint -->
+<div class="absolute inset-0 bg-error opacity-5 pointer-events-none"></div>
+<div class="flex justify-between items-center relative z-10">
+<div class="flex items-center gap-stack-sm">
+<span class="material-symbols-outlined text-error">shopping_bag</span>
+<span class="font-body-lg text-body-lg text-primary">Shopping</span>
+</div>
+<span class="font-label-md text-label-md text-error bg-error-container px-2 py-0.5 rounded-full">Near Limit</span>
+</div>
+<div class="flex justify-between items-baseline pl-9 relative z-10">
+<span class="font-label-md text-label-md text-primary font-bold">₹1,850 <span class="text-on-surface-variant font-normal">/ ₹3,000</span></span>
+</div>
+<div class="pl-9 mt-1 relative z-10">
+<div class="h-[2px] w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-error rounded-full" style="width: 85%;"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="bg-surface-container-lowest dark:bg-surface-container-lowest fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-container-padding py-4 rounded-t-xl border-t border-outline-variant dark:border-outline shadow-sm md:hidden">
+<!-- Home -->
+<a class="flex flex-col items-center gap-1 text-outline dark:text-outline-variant hover:text-primary dark:hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined">home</span>
+</a>
+<!-- Budgets / Wallet (Active) -->
+<a class="flex flex-col items-center gap-1 text-primary dark:text-on-surface scale-110 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+</a>
+<!-- Add (FAB-like but in nav) -->
+<a class="flex flex-col items-center gap-1 text-outline dark:text-outline-variant hover:text-primary dark:hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined">add_circle</span>
+</a>
+<!-- Analytics -->
+<a class="flex flex-col items-center gap-1 text-outline dark:text-outline-variant hover:text-primary dark:hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined">analytics</span>
+</a>
+<!-- Settings -->
+<a class="flex flex-col items-center gap-1 text-outline dark:text-outline-variant hover:text-primary dark:hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+</a>
+</nav>
+<!-- Desktop Navigation Cluster (Visible md and up) -->
+<div class="hidden md:flex fixed top-stack-md right-container-padding gap-stack-md z-50">
+<a class="p-2 text-outline hover:text-primary transition-colors" href="#"><span class="material-symbols-outlined">home</span></a>
+<a class="p-2 text-primary bg-surface-container-highest rounded-full transition-colors" href="#"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span></a>
+<a class="p-2 text-outline hover:text-primary transition-colors" href="#"><span class="material-symbols-outlined">add_circle</span></a>
+<a class="p-2 text-outline hover:text-primary transition-colors" href="#"><span class="material-symbols-outlined">analytics</span></a>
+<a class="p-2 text-outline hover:text-primary transition-colors" href="#"><span class="material-symbols-outlined">settings</span></a>
+</div>
+</body></html>

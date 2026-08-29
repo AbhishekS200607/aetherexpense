@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Receipts</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#474746",
+                        "outline": "#747878",
+                        "on-tertiary-container": "#7671ff",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "tertiary-container": "#0f0069",
+                        "inverse-primary": "#c8c6c5",
+                        "on-surface-variant": "#444748",
+                        "error": "#ba1a1a",
+                        "surface-bright": "#fdf8f8",
+                        "tertiary": "#000000",
+                        "primary-fixed": "#e5e2e1",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#e3e2e2",
+                        "primary-container": "#1c1b1b",
+                        "surface-tint": "#5f5e5e",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#f4f0ef",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "inverse-surface": "#313030",
+                        "surface-variant": "#e5e2e1",
+                        "on-primary-fixed": "#1c1b1b",
+                        "surface-container-high": "#ebe7e6",
+                        "on-secondary-container": "#646464",
+                        "outline-variant": "#c4c7c7",
+                        "secondary-fixed-dim": "#c7c6c6",
+                        "on-primary-container": "#858383",
+                        "on-surface": "#1c1b1b",
+                        "surface": "#fdf8f8",
+                        "surface-dim": "#ddd9d8",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-background": "#1c1b1b",
+                        "tertiary-fixed-dim": "#c3c0ff",
+                        "on-secondary-fixed-variant": "#464747",
+                        "primary": "#000000",
+                        "on-error": "#ffffff",
+                        "surface-container-low": "#f7f3f2",
+                        "on-tertiary-fixed-variant": "#3323cc",
+                        "secondary": "#5e5e5e",
+                        "surface-container-highest": "#e5e2e1",
+                        "on-tertiary-fixed": "#0f0069",
+                        "background": "#fdf8f8",
+                        "tertiary-fixed": "#e2dfff",
+                        "surface-container": "#f1edec",
+                        "secondary-fixed": "#e3e2e2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-lg": "32px",
+                        "stack-md": "16px",
+                        "unit": "8px",
+                        "stack-sm": "8px",
+                        "container-padding": "24px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "display-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-lg-mobile": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["72px", { "lineHeight": "80px", "letterSpacing": "-0.04em", "fontWeight": "200" }],
+                        "display-md": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "300" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "34px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #F9F9F8; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased min-h-screen flex flex-col pb-24 md:pb-0">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface flex justify-between items-center px-container-padding py-stack-md w-full sticky top-0 z-40">
+<div class="flex items-center gap-unit">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-outline">person</span>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary dark:text-on-surface">Receipts</h1>
+</div>
+<button class="text-primary dark:text-on-surface hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">search</span>
+</button>
+</header>
+<!-- Main Content -->
+<main class="flex-1 px-container-padding py-stack-lg max-w-7xl mx-auto w-full">
+<!-- Actions -->
+<section class="flex flex-col sm:flex-row gap-gutter mb-stack-lg">
+<button class="flex-1 bg-primary text-on-primary py-3 px-6 rounded-lg font-label-md text-label-md flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">photo_camera</span>
+                Capture
+            </button>
+<button class="flex-1 bg-transparent border border-outline-variant text-primary py-3 px-6 rounded-lg font-label-md text-label-md flex items-center justify-center gap-2 hover:bg-surface-container-low transition-all">
+<span class="material-symbols-outlined">upload_file</span>
+                Upload
+            </button>
+</section>
+<!-- Receipts Grid -->
+<section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-gutter">
+<!-- Receipt Item 1 -->
+<div class="group relative bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden hover:border-primary transition-colors cursor-pointer">
+<div class="aspect-[3/4] bg-surface-container-low relative">
+<img class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" data-alt="A crisp, high-contrast overhead photograph of a modern minimalist receipt from a high-end coffee shop. The receipt is printed on bright white paper with clean typography, resting on a smooth, pale gray stone surface. The lighting is soft, diffused natural daylight, emphasizing the clean lines and creating a subtle, elegant drop shadow. The overall aesthetic is clean, precise, and financially focused." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0HHXvZ6UDU_0vU3usiq0-OwDpl-s7dpt5TCH2Mq_GMFHryhSXO8kL4WWEg9fI99T7kcXw_o_4CNMty8yKeNnHKI9v6A1_9mg2ckBpeaCdk_JttEwVMU0feml7aSCpUj9ycEUp7ur2lhz0LkUqqJouTUh8vivPqjf2f4_8oTrvP9jZprveCNFvGhNMWbiV85_FHO-gPHj2s_XWjTQywWnZ9gHCIfcSY1dTAySWrvBcHDPIJCS6zv-s"/>
+</div>
+<div class="p-unit border-t border-outline-variant">
+<p class="font-label-sm text-label-sm text-on-surface truncate">Oct 24 • Blue Bottle</p>
+<p class="font-label-sm text-label-sm text-outline truncate mt-1">$12.50</p>
+</div>
+</div>
+<!-- Receipt Item 2 -->
+<div class="group relative bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden hover:border-primary transition-colors cursor-pointer">
+<div class="aspect-[3/4] bg-surface-container-low relative">
+<img class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" data-alt="A detailed, straight-on macro shot of a sleek restaurant receipt, softly illuminated to highlight the printed total. The receipt sits on a pristine, matte white surface. The scene is shot with shallow depth of field, keeping the total amount sharp while the background gently blurs. The color palette is monochromatic with stark blacks and whites, evoking a premium, editorial financial feel." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiGCIn3V5CWqtt7I9bTAX9Adej56YXDHY3_vHU7ZmBqmWAQdOsjG3JerzM1q7feKx8G-0CUZ-nP8soHkScO4OU8AWewtKP8Ebgb7B9XosrkzgIJ2iORm_lv9ugEV9UL3skPluKWPy7HN8UhslaHz6Sqbx0JnpxPXT_cJg9xDiuo4Th-kafpp6ADVxV1rSB83yQD_saajtrW6y_uNnerwrl8JJtn6czQIAtbq_1dBT2aWlHF8Tqn9oe"/>
+</div>
+<div class="p-unit border-t border-outline-variant">
+<p class="font-label-sm text-label-sm text-on-surface truncate">Oct 22 • Omakase</p>
+<p class="font-label-sm text-label-sm text-outline truncate mt-1">$145.00</p>
+</div>
+</div>
+<!-- Receipt Item 3 -->
+<div class="group relative bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden hover:border-primary transition-colors cursor-pointer">
+<div class="aspect-[3/4] bg-surface-container-low relative flex items-center justify-center">
+<span class="material-symbols-outlined text-outline text-4xl">receipt_long</span>
+</div>
+<div class="p-unit border-t border-outline-variant">
+<p class="font-label-sm text-label-sm text-on-surface truncate">Oct 20 • Office Supplies</p>
+<p class="font-label-sm text-label-sm text-outline truncate mt-1">$89.99</p>
+</div>
+</div>
+<!-- Receipt Item 4 -->
+<div class="group relative bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden hover:border-primary transition-colors cursor-pointer">
+<div class="aspect-[3/4] bg-surface-container-low relative">
+<img class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" data-alt="A clean, minimalist flat-lay of an artisanal bakery receipt. The paper is bright white, contrasting with a perfectly smooth, light ash wood table. Soft, even lighting eliminates harsh shadows, giving the image a calm, organized, and sophisticated financial documentation aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqJLM8YrVNqIlP1ZtNeYe65gGKleD9R7L3DaKJzKmZ6A6WcmqQPx1doZQHtQ4C5gWDE10v8y1D3GKOijCLOzEq3z1fu7QE1YjVz39lCV63wnxga1K5nGtpLzCK-0JltmK9dZyw8nX4XuTduNyGPNF0JbY_FNQb9zMamChQHZL3lG6WJowI7I0iMXglMK0Za72_E__T8gkcXTiXfH4rX-nF2KojUimezDj63HFsgH3bSRV5hC-s3VSW"/>
+</div>
+<div class="p-unit border-t border-outline-variant">
+<p class="font-label-sm text-label-sm text-on-surface truncate">Oct 18 • Tartine</p>
+<p class="font-label-sm text-label-sm text-outline truncate mt-1">$34.20</p>
+</div>
+</div>
+<!-- Receipt Item 5 -->
+<div class="group relative bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden hover:border-primary transition-colors cursor-pointer">
+<div class="aspect-[3/4] bg-surface-container-low relative flex items-center justify-center">
+<span class="material-symbols-outlined text-outline text-4xl">receipt_long</span>
+</div>
+<div class="p-unit border-t border-outline-variant">
+<p class="font-label-sm text-label-sm text-on-surface truncate">Oct 15 • Uber</p>
+<p class="font-label-sm text-label-sm text-outline truncate mt-1">$24.50</p>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 bg-surface-container-lowest border-t border-outline-variant flex justify-around items-center px-container-padding py-4 shadow-sm rounded-t-xl">
+<a class="flex flex-col items-center text-outline hover:text-primary transition-colors font-label-sm text-label-sm gap-1" href="#">
+<span class="material-symbols-outlined">home</span>
+</a>
+<a class="flex flex-col items-center text-outline hover:text-primary transition-colors font-label-sm text-label-sm gap-1" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+</a>
+<a class="flex flex-col items-center text-primary scale-110 font-label-sm text-label-sm gap-1" href="#">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+</a>
+<a class="flex flex-col items-center text-outline hover:text-primary transition-colors font-label-sm text-label-sm gap-1" href="#">
+<span class="material-symbols-outlined">analytics</span>
+</a>
+<a class="flex flex-col items-center text-outline hover:text-primary transition-colors font-label-sm text-label-sm gap-1" href="#">
+<span class="material-symbols-outlined">settings</span>
+</a>
+</nav>
+</body></html>

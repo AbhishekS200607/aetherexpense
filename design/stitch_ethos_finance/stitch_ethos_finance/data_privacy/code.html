@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Backup &amp; Restore</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#474746",
+                        "outline": "#747878",
+                        "on-tertiary-container": "#7671ff",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "tertiary-container": "#0f0069",
+                        "inverse-primary": "#c8c6c5",
+                        "on-surface-variant": "#444748",
+                        "error": "#ba1a1a",
+                        "surface-bright": "#fdf8f8",
+                        "tertiary": "#000000",
+                        "primary-fixed": "#e5e2e1",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#e3e2e2",
+                        "primary-container": "#1c1b1b",
+                        "surface-tint": "#5f5e5e",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#f4f0ef",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "inverse-surface": "#313030",
+                        "surface-variant": "#e5e2e1",
+                        "on-primary-fixed": "#1c1b1b",
+                        "surface-container-high": "#ebe7e6",
+                        "on-secondary-container": "#646464",
+                        "outline-variant": "#c4c7c7",
+                        "secondary-fixed-dim": "#c7c6c6",
+                        "on-primary-container": "#858383",
+                        "on-surface": "#1c1b1b",
+                        "surface": "#fdf8f8",
+                        "surface-dim": "#ddd9d8",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-background": "#1c1b1b",
+                        "tertiary-fixed-dim": "#c3c0ff",
+                        "on-secondary-fixed-variant": "#464747",
+                        "primary": "#000000",
+                        "on-error": "#ffffff",
+                        "surface-container-low": "#f7f3f2",
+                        "on-tertiary-fixed-variant": "#3323cc",
+                        "secondary": "#5e5e5e",
+                        "surface-container-highest": "#e5e2e1",
+                        "on-tertiary-fixed": "#0f0069",
+                        "background": "#fdf8f8",
+                        "tertiary-fixed": "#e2dfff",
+                        "surface-container": "#f1edec",
+                        "secondary-fixed": "#e3e2e2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-lg": "32px",
+                        "stack-md": "16px",
+                        "unit": "8px",
+                        "stack-sm": "8px",
+                        "container-padding": "24px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "display-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-lg-mobile": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["72px", { "lineHeight": "80px", "letterSpacing": "-0.04em", "fontWeight": "200" }],
+                        "display-md": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "300" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "34px", "fontWeight": "500" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fdf8f8; /* surface */
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-surface text-primary font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg docked full-width top-0 bg-surface flat no shadows flex justify-between items-center px-container-padding py-stack-md w-full sticky z-40">
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-primary hover:opacity-80 transition-opacity" data-icon="arrow_back">arrow_back</button>
+<span class="font-display-md text-display-md font-light text-primary tracking-tight">Overview</span>
+</div>
+<div class="flex items-center">
+<span class="material-symbols-outlined text-primary hover:opacity-80 transition-opacity cursor-pointer" data-icon="search">search</span>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow px-container-padding py-stack-lg md:px-0 md:max-w-2xl md:mx-auto w-full">
+<div class="mb-stack-lg">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-surface mb-unit">Your data</h1>
+<div class="flex items-center gap-2 mt-stack-sm text-secondary">
+<span class="material-symbols-outlined" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-body-md text-body-md">Stored on this device</span>
+</div>
+</div>
+<!-- Bento Grid for Actions -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-stack-md">
+<!-- Export Backup -->
+<button class="bg-surface-container-lowest border border-outline-variant rounded-xl p-container-padding flex flex-col items-start gap-stack-md hover:bg-surface-container-low transition-colors text-left group">
+<div class="bg-surface-container h-12 w-12 rounded-full flex items-center justify-center group-hover:bg-primary-fixed transition-colors">
+<span class="material-symbols-outlined text-on-surface" data-icon="upload">upload</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface mb-1">Export backup</h3>
+<p class="font-body-md text-body-md text-secondary text-sm">Save a copy of your financial records securely.</p>
+</div>
+</button>
+<!-- Import Backup -->
+<button class="bg-surface-container-lowest border border-outline-variant rounded-xl p-container-padding flex flex-col items-start gap-stack-md hover:bg-surface-container-low transition-colors text-left group">
+<div class="bg-surface-container h-12 w-12 rounded-full flex items-center justify-center group-hover:bg-primary-fixed transition-colors">
+<span class="material-symbols-outlined text-on-surface" data-icon="download">download</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface mb-1">Import backup</h3>
+<p class="font-body-md text-body-md text-secondary text-sm">Restore your data from a previously saved file.</p>
+</div>
+</button>
+<!-- Encrypted Backup (Spans full width on mobile, 2 cols on md) -->
+<button class="md:col-span-2 bg-primary text-on-primary rounded-xl p-container-padding flex flex-row items-center justify-between hover:opacity-90 transition-opacity text-left">
+<div class="flex flex-row items-center gap-stack-md">
+<div class="bg-inverse-surface h-12 w-12 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary" data-icon="lock">lock</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-primary mb-1">Create encrypted backup</h3>
+<p class="font-body-md text-body-md text-inverse-primary text-sm">Password-protect your data export.</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-primary opacity-50" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<div class="mt-stack-lg border-t border-outline-variant pt-stack-md flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-outline text-sm" data-icon="shield">shield</span>
+<p class="font-label-sm text-label-sm text-outline text-center uppercase tracking-widest">Your financial data stays on your device.</p>
+</div>
+</main>
+<!-- BottomNavBar (Hidden on MD, suppressed intent rules applied based on context, assuming this is a settings sub-page, we suppress standard nav) -->
+<!-- Suppressed: Task-Focused sub-page featuring a "Back" action implies a temporary departure from the main navigation flow. -->
+</body></html>

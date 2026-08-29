@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary-fixed-variant": "#474746",
+                      "outline": "#747878",
+                      "on-tertiary-container": "#7671ff",
+                      "primary-fixed-dim": "#c8c6c5",
+                      "tertiary-container": "#0f0069",
+                      "inverse-primary": "#c8c6c5",
+                      "on-surface-variant": "#444748",
+                      "error": "#ba1a1a",
+                      "surface-bright": "#fdf8f8",
+                      "tertiary": "#000000",
+                      "primary-fixed": "#e5e2e1",
+                      "surface-container-lowest": "#ffffff",
+                      "secondary-container": "#e3e2e2",
+                      "primary-container": "#1c1b1b",
+                      "surface-tint": "#5f5e5e",
+                      "on-tertiary": "#ffffff",
+                      "inverse-on-surface": "#f4f0ef",
+                      "on-error-container": "#93000a",
+                      "on-secondary-fixed": "#1b1c1c",
+                      "inverse-surface": "#313030",
+                      "surface-variant": "#e5e2e1",
+                      "on-primary-fixed": "#1c1b1b",
+                      "surface-container-high": "#ebe7e6",
+                      "on-secondary-container": "#646464",
+                      "outline-variant": "#c4c7c7",
+                      "secondary-fixed-dim": "#c7c6c6",
+                      "on-primary-container": "#858383",
+                      "on-surface": "#1c1b1b",
+                      "surface": "#fdf8f8",
+                      "surface-dim": "#ddd9d8",
+                      "on-secondary": "#ffffff",
+                      "on-primary": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "on-background": "#1c1b1b",
+                      "tertiary-fixed-dim": "#c3c0ff",
+                      "on-secondary-fixed-variant": "#464747",
+                      "primary": "#000000",
+                      "on-error": "#ffffff",
+                      "surface-container-low": "#f7f3f2",
+                      "on-tertiary-fixed-variant": "#3323cc",
+                      "secondary": "#5e5e5e",
+                      "surface-container-highest": "#e5e2e1",
+                      "on-tertiary-fixed": "#0f0069",
+                      "background": "#fdf8f8",
+                      "tertiary-fixed": "#e2dfff",
+                      "surface-container": "#f1edec",
+                      "secondary-fixed": "#e3e2e2"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack-lg": "32px",
+                      "stack-md": "16px",
+                      "unit": "8px",
+                      "stack-sm": "8px",
+                      "container-padding": "24px",
+                      "gutter": "16px"
+              },
+              "fontFamily": {
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "display-md": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "display-lg": [
+                              "72px",
+                              {
+                                      "lineHeight": "80px",
+                                      "letterSpacing": "-0.04em",
+                                      "fontWeight": "200"
+                              }
+                      ],
+                      "display-md": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "300"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.01em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "34px",
+                                      "fontWeight": "500"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        body {
+            background-color: #F9F9F8;
+            color: #1c1b1b;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .card-border {
+            border: 1px solid #E5E5E5;
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md min-h-screen flex flex-col items-center">
+<!-- Top Navigation (Desktop) -->
+<nav class="hidden md:flex justify-between items-center px-container-padding py-stack-md w-full bg-surface max-w-4xl w-full">
+<div class="flex items-center gap-unit">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden card-border">
+<span class="material-symbols-outlined text-on-surface">person</span>
+</div>
+<div>
+<h1 class="font-headline-lg text-headline-lg font-bold text-primary tracking-tight">Overview</h1>
+</div>
+</div>
+<div class="flex gap-gutter">
+<span class="material-symbols-outlined text-on-surface hover:opacity-80 transition-opacity cursor-pointer">search</span>
+</div>
+</nav>
+<!-- Top Navigation (Mobile) -->
+<nav class="md:hidden flex justify-between items-center px-container-padding py-stack-md w-full bg-surface docked full-width top-0">
+<div class="flex items-center gap-unit">
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden card-border">
+<span class="material-symbols-outlined text-on-surface text-sm">person</span>
+</div>
+<div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary tracking-tight">Overview</h1>
+</div>
+</div>
+<div class="flex gap-gutter">
+<span class="material-symbols-outlined text-on-surface hover:opacity-80 transition-opacity cursor-pointer">search</span>
+</div>
+</nav>
+<!-- Main Canvas -->
+<main class="flex-grow w-full max-w-4xl px-container-padding md:px-0 py-stack-lg flex flex-col gap-stack-lg mb-24 md:mb-0">
+<!-- Header Section -->
+<header class="flex flex-col gap-unit">
+<p class="font-label-md text-label-md text-outline">Good evening • 29 August</p>
+<div class="flex flex-col gap-unit">
+<h2 class="font-display-lg text-display-lg text-primary">₹24,850<span class="text-outline">.00</span></h2>
+<p class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Available balance</p>
+</div>
+</header>
+<!-- Metrics Grid -->
+<section class="grid grid-cols-2 md:grid-cols-3 gap-gutter">
+<!-- Income Card -->
+<div class="bg-surface-container-lowest p-container-padding rounded-lg card-border flex flex-col gap-unit">
+<span class="material-symbols-outlined text-secondary text-xl">arrow_downward</span>
+<div>
+<p class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Income</p>
+<p class="font-body-lg text-body-lg text-primary font-medium mt-1">₹32,400</p>
+</div>
+</div>
+<!-- Expenses Card -->
+<div class="bg-surface-container-lowest p-container-padding rounded-lg card-border flex flex-col gap-unit">
+<span class="material-symbols-outlined text-secondary text-xl">arrow_upward</span>
+<div>
+<p class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Expenses</p>
+<p class="font-body-lg text-body-lg text-primary font-medium mt-1">₹7,550</p>
+</div>
+</div>
+<!-- Savings Card (Span 2 cols on mobile, 1 on desktop) -->
+<div class="col-span-2 md:col-span-1 bg-surface-container-lowest p-container-padding rounded-lg card-border flex flex-col gap-unit">
+<span class="material-symbols-outlined text-secondary text-xl">savings</span>
+<div>
+<p class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Savings</p>
+<p class="font-body-lg text-body-lg text-primary font-medium mt-1">₹24,850</p>
+</div>
+</div>
+</section>
+<!-- Spending Progress -->
+<section class="bg-surface-container-lowest p-container-padding rounded-lg card-border flex flex-col gap-stack-md">
+<div class="flex justify-between items-end">
+<p class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Spending this month</p>
+<p class="font-label-sm text-label-sm text-primary">₹7,550 / ₹15,000</p>
+</div>
+<div class="w-full h-1 bg-secondary-container rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 50%;"></div>
+</div>
+</section>
+<!-- Recent Transactions -->
+<section class="flex flex-col gap-stack-md">
+<div class="flex justify-between items-center">
+<h3 class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Recent Transactions</h3>
+<button class="font-label-md text-label-md text-primary hover:text-outline transition-colors">See all</button>
+</div>
+<div class="bg-surface-container-lowest rounded-lg card-border overflow-hidden flex flex-col">
+<!-- Transaction Item -->
+<div class="flex items-center justify-between p-stack-md border-b border-secondary-container ml-container-padding hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-gutter -ml-container-padding pl-container-padding">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center card-border">
+<span class="material-symbols-outlined text-secondary">restaurant</span>
+</div>
+<div class="flex flex-col">
+<p class="font-body-md text-body-md text-primary font-medium">Swiggy</p>
+<p class="font-label-sm text-label-sm text-outline">Food &amp; Dining</p>
+</div>
+</div>
+<p class="font-body-md text-body-md text-primary">-₹450</p>
+</div>
+<!-- Transaction Item -->
+<div class="flex items-center justify-between p-stack-md border-b border-secondary-container ml-container-padding hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-gutter -ml-container-padding pl-container-padding">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center card-border">
+<span class="material-symbols-outlined text-secondary">directions_car</span>
+</div>
+<div class="flex flex-col">
+<p class="font-body-md text-body-md text-primary font-medium">Uber</p>
+<p class="font-label-sm text-label-sm text-outline">Transportation</p>
+</div>
+</div>
+<p class="font-body-md text-body-md text-primary">-₹250</p>
+</div>
+<!-- Transaction Item -->
+<div class="flex items-center justify-between p-stack-md border-b border-secondary-container ml-container-padding hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-gutter -ml-container-padding pl-container-padding">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center card-border">
+<span class="material-symbols-outlined text-secondary">work</span>
+</div>
+<div class="flex flex-col">
+<p class="font-body-md text-body-md text-primary font-medium">Salary</p>
+<p class="font-label-sm text-label-sm text-outline">Income</p>
+</div>
+</div>
+<p class="font-body-md text-body-md text-primary text-on-tertiary-container">+₹32,400</p>
+</div>
+<!-- Transaction Item -->
+<div class="flex items-center justify-between p-stack-md ml-container-padding hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-gutter -ml-container-padding pl-container-padding">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center card-border">
+<span class="material-symbols-outlined text-secondary">movie</span>
+</div>
+<div class="flex flex-col">
+<p class="font-body-md text-body-md text-primary font-medium">Netflix</p>
+<p class="font-label-sm text-label-sm text-outline">Entertainment</p>
+</div>
+</div>
+<p class="font-body-md text-body-md text-primary">-₹650</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Floating Action Button (Mobile Only) -->
+<button class="md:hidden fixed bottom-24 right-container-padding w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg flex items-center justify-center z-40 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+</button>
+<!-- Bottom Navigation Bar (Mobile) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-container-padding py-4 bg-surface-container-lowest rounded-t-xl border-t border-outline-variant shadow-sm">
+<button class="flex flex-col items-center gap-1 text-primary scale-110 transition-transform duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">add_circle</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">analytics</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</nav>
+</body></html>

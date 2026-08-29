@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Transaction Details</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#474746",
+                        "outline": "#747878",
+                        "on-tertiary-container": "#7671ff",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "tertiary-container": "#0f0069",
+                        "inverse-primary": "#c8c6c5",
+                        "on-surface-variant": "#444748",
+                        "error": "#ba1a1a",
+                        "surface-bright": "#fdf8f8",
+                        "tertiary": "#000000",
+                        "primary-fixed": "#e5e2e1",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#e3e2e2",
+                        "primary-container": "#1c1b1b",
+                        "surface-tint": "#5f5e5e",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#f4f0ef",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "inverse-surface": "#313030",
+                        "surface-variant": "#e5e2e1",
+                        "on-primary-fixed": "#1c1b1b",
+                        "surface-container-high": "#ebe7e6",
+                        "on-secondary-container": "#646464",
+                        "outline-variant": "#c4c7c7",
+                        "secondary-fixed-dim": "#c7c6c6",
+                        "on-primary-container": "#858383",
+                        "on-surface": "#1c1b1b",
+                        "surface": "#fdf8f8",
+                        "surface-dim": "#ddd9d8",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-background": "#1c1b1b",
+                        "tertiary-fixed-dim": "#c3c0ff",
+                        "on-secondary-fixed-variant": "#464747",
+                        "primary": "#000000",
+                        "on-error": "#ffffff",
+                        "surface-container-low": "#f7f3f2",
+                        "on-tertiary-fixed-variant": "#3323cc",
+                        "secondary": "#5e5e5e",
+                        "surface-container-highest": "#e5e2e1",
+                        "on-tertiary-fixed": "#0f0069",
+                        "background": "#fdf8f8",
+                        "tertiary-fixed": "#e2dfff",
+                        "surface-container": "#f1edec",
+                        "secondary-fixed": "#e3e2e2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-lg": "32px",
+                        "stack-md": "16px",
+                        "unit": "8px",
+                        "stack-sm": "8px",
+                        "container-padding": "24px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "display-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-lg-mobile": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["72px", { "lineHeight": "80px", "letterSpacing": "-0.04em", "fontWeight": "200" }],
+                        "display-md": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "300" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "34px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #F9F9F8; }
+        .grid-layout { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 0 24px; }
+        @media (min-width: 768px) {
+            .grid-layout { grid-template-columns: repeat(12, 1fr); max-width: 1200px; margin: 0 auto; }
+            .content-col { grid-column: 4 / 10; }
+        }
+        .content-col { grid-column: 1 / -1; }
+        
+        .bento-card {
+            background-color: #ffffff;
+            border: 1px solid #E5E5E5;
+            border-radius: 12px;
+            padding: 24px;
+        }
+        
+        .list-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid #E5E5E5;
+        }
+        .list-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .list-row:first-child { padding-top: 0; }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body class="text-on-surface antialiased min-h-screen flex flex-col">
+<!-- Top Navigation (Transactional context - Back button implied) -->
+<header class="flex justify-between items-center px-container-padding py-stack-md w-full bg-surface dark:bg-surface sticky top-0 z-10 glass-panel">
+<div class="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-on-surface">arrow_back</span>
+<span class="font-headline-lg-mobile text-headline-lg-mobile font-bold tracking-tight">Details</span>
+</div>
+<div class="hover:opacity-80 transition-opacity cursor-pointer">
+<span class="material-symbols-outlined text-outline">more_vert</span>
+</div>
+</header>
+<main class="flex-grow py-stack-lg">
+<div class="grid-layout">
+<div class="content-col flex flex-col gap-stack-lg">
+<!-- Main Amount Hero -->
+<div class="bento-card flex flex-col items-center justify-center py-12 text-center relative overflow-hidden">
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-error-container rounded-full opacity-20 blur-2xl pointer-events-none"></div>
+<span class="font-label-md text-label-md text-outline mb-unit uppercase tracking-wider">Amount Spent</span>
+<h1 class="font-display-md text-display-md font-light text-primary tracking-tight">-₹420.00</h1>
+<div class="mt-stack-sm flex items-center gap-2 bg-surface-container-low px-3 py-1 rounded-full border border-outline-variant">
+<span class="material-symbols-outlined text-label-sm text-outline" data-weight="fill">restaurant</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Food &amp; Dining</span>
+</div>
+</div>
+<!-- Transaction Metadata -->
+<div class="bento-card">
+<div class="list-row">
+<span class="font-body-md text-body-md text-outline">Merchant</span>
+<span class="font-body-md text-body-md text-primary font-medium">Swiggy</span>
+</div>
+<div class="list-row">
+<span class="font-body-md text-body-md text-outline">Date</span>
+<span class="font-body-md text-body-md text-primary">29 August 2026</span>
+</div>
+<div class="list-row">
+<span class="font-body-md text-body-md text-outline">Time</span>
+<span class="font-body-md text-body-md text-primary">8:42 PM</span>
+</div>
+<div class="list-row">
+<span class="font-body-md text-body-md text-outline">Payment Method</span>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-outline">account_balance</span>
+<span class="font-body-md text-body-md text-primary">UPI</span>
+</div>
+</div>
+<div class="list-row">
+<span class="font-body-md text-body-md text-outline">Note</span>
+<span class="font-body-md text-body-md text-primary italic">Dinner</span>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex justify-center gap-8 mt-stack-md">
+<button class="flex items-center gap-2 text-outline hover:text-primary transition-colors py-2 px-4 group">
+<span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">edit</span>
+<span class="font-label-md text-label-md">Edit</span>
+</button>
+<button class="flex items-center gap-2 text-error opacity-80 hover:opacity-100 transition-opacity py-2 px-4 group">
+<span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">delete</span>
+<span class="font-label-md text-label-md">Delete</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Suppressed BottomNavBar due to Transactional/Details context -->
+</body></html>

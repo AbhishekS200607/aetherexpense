@@ -1,0 +1,1 @@
+ALTER TABLE `recurring_transactions` ADD `account_id` text REFERENCES accounts(id);
