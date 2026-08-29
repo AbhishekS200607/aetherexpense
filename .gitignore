@@ -3,6 +3,13 @@
 # dependencies
 node_modules/
 
+# IDE & AI Assistant files
+.vscode/
+.claude/
+.idea/
+AGENTS.md
+CLAUDE.md
+
 # Expo & Build
 .expo/
 dist/
