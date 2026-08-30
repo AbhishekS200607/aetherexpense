@@ -2,11 +2,13 @@
  * AetherExpense — Tab Navigator Layout
  * Bottom tab bar matching Stitch ethos finance specs:
  * 5 tabs: Dashboard, Transactions, Reports, Budgets, Settings.
+ * Uses safe area insets to prevent collision with Android system navigation bars.
  */
 
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { EthosColors, EthosSpacing } from '@/theme/ethos';
 
@@ -26,6 +28,10 @@ const TAB_CONFIG: Array<{
 ];
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+  const bottomInset = Math.max(insets.bottom, 6);
+  const tabBarHeight = (Platform.OS === 'ios' ? 54 : 56) + bottomInset;
+
   return (
     <Tabs
       screenOptions={{
@@ -34,10 +40,10 @@ export default function TabLayout() {
           backgroundColor: EthosColors.surfaceContainerLowest,
           borderTopColor:  EthosColors.outlineVariant,
           borderTopWidth:  1,
-          height:          Platform.OS === 'ios' ? 76 : 64,
-          paddingBottom:   Platform.OS === 'ios' ? EthosSpacing.stackSm : EthosSpacing.stackSm,
-          paddingTop:      EthosSpacing.stackSm,
-          elevation:       4,
+          height:          tabBarHeight,
+          paddingBottom:   bottomInset,
+          paddingTop:      6,
+          elevation:       8,
         },
         tabBarActiveTintColor:   EthosColors.primary,
         tabBarInactiveTintColor: EthosColors.outline,
@@ -67,3 +73,4 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+

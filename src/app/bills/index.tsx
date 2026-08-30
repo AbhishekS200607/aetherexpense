@@ -186,29 +186,57 @@ export default function BillsScreen() {
       let createdTxnId: string | null = null;
 
       // Cancel pending local notification for paid bill
-      await cancelBillNotification(item.notification_id);
+      try {
+        await cancelBillNotification(item.notification_id);
+      } catch (e) {
+        console.warn('[BillsScreen] Notification cancel warning:', e);
+      }
 
       // Option B: Auto-create expense transaction if enabled
       if (item.auto_create_transaction === 1) {
-        createdTxnId = generateUUID();
-        await db.insert(transactions).values({
-          id:                     createdTxnId,
-          type:                   'expense',
-          amount:                 item.amount,
-          category_id:            item.category_id || '',
-          account_id:             item.account_id,
-          transfer_to_account_id: null,
-          date:                   today,
-          time:                   '10:00',
-          note:                   `Bill payment: ${item.name}`,
-          merchant:               item.name,
-          payment_method:         'cash',
-          is_recurring:           0,
-          recurring_id:           null,
-          bill_id:                item.id,
-          created_at:             now,
-          updated_at:             now,
-        });
+        // Resolve valid fallback category if null or empty
+        let catId = item.category_id;
+        if (!catId) {
+          const cats = await db
+            .select()
+            .from(categories)
+            .where(and(eq(categories.type, 'expense'), eq(categories.is_active, 1)))
+            .limit(1);
+          if (cats.length > 0) catId = cats[0].id;
+        }
+
+        // Resolve valid fallback account if null or empty
+        let accId = item.account_id;
+        if (!accId) {
+          const accs = await db
+            .select()
+            .from(accounts)
+            .where(eq(accounts.is_active, 1))
+            .limit(1);
+          if (accs.length > 0) accId = accs[0].id;
+        }
+
+        if (catId && accId) {
+          createdTxnId = generateUUID();
+          await db.insert(transactions).values({
+            id:                     createdTxnId,
+            type:                   'expense',
+            amount:                 item.amount,
+            category_id:            catId,
+            account_id:             accId,
+            transfer_to_account_id: null,
+            date:                   today,
+            time:                   '10:00',
+            note:                   `Bill payment: ${item.name}`,
+            merchant:               item.name,
+            payment_method:         'cash',
+            is_recurring:           0,
+            recurring_id:           null,
+            bill_id:                item.id,
+            created_at:             now,
+            updated_at:             now,
+          });
+        }
       }
 
       // Mark current bill as paid
@@ -229,14 +257,19 @@ export default function BillsScreen() {
         const nextBillId = generateUUID();
         const formattedAmt = formatCurrency(item.amount, currencyCode);
 
-        // Schedule local notification for next occurrence
-        const nextNotifId = await scheduleBillNotification(
-          nextBillId,
-          item.name,
-          formattedAmt,
-          nextDueDate,
-          1
-        );
+        // Schedule local notification for next occurrence safely
+        let nextNotifId: string | null = null;
+        try {
+          nextNotifId = await scheduleBillNotification(
+            nextBillId,
+            item.name,
+            formattedAmt,
+            nextDueDate,
+            1
+          );
+        } catch (e) {
+          console.warn('[BillsScreen] Next notification schedule warning:', e);
+        }
 
         await db.insert(bills).values({
           id:                      nextBillId,
@@ -260,12 +293,50 @@ export default function BillsScreen() {
         });
       }
 
-      invalidateData();
       loadBillsData();
+      invalidateData();
     } catch (err) {
       console.error('[BillsScreen] Mark paid error:', err);
       Alert.alert('Error', 'Could not mark bill as paid.');
     }
+  };
+
+  const handleDeleteBill = (billId: string, billName: string, notifId: string | null) => {
+    Alert.alert(
+      'Delete Bill Reminder?',
+      `Are you sure you want to delete "${billName}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            if (!sqliteDb) return;
+            try {
+              const db = createDrizzleDB(sqliteDb);
+
+              // Cancel pending notification
+              await cancelBillNotification(notifId);
+
+              // Unlink transactions pointing to this bill
+              await db
+                .update(transactions)
+                .set({ bill_id: null })
+                .where(eq(transactions.bill_id, billId));
+
+              // Delete bill record
+              await db.delete(bills).where(eq(bills.id, billId));
+
+              loadBillsData();
+              invalidateData();
+            } catch (err) {
+              console.error('[BillsScreen] Error deleting bill:', err);
+              Alert.alert('Error', 'Could not delete bill.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   // Dashboard Metrics Computations
@@ -472,33 +543,46 @@ export default function BillsScreen() {
                   </View>
 
                   <View style={styles.billRight}>
-                    <Text style={styles.billAmount}>
-                      {formatCurrency(item.amount, currencyCode)}
-                    </Text>
+                    <View style={{ alignItems: 'flex-end', gap: 2 }}>
+                      <Text style={styles.billAmount}>
+                        {formatCurrency(item.amount, currencyCode)}
+                      </Text>
 
-                    {/* Status Badge or Mark Paid Action */}
-                    {item.is_paid === 1 ? (
-                      <View style={[styles.statusBadge, styles.paidBadge]}>
-                        <Ionicons name="checkmark-circle" size={12} color="#059669" />
-                        <Text style={styles.paidBadgeText}>PAID</Text>
-                      </View>
-                    ) : item.statusTag === 'overdue' ? (
-                      <Pressable
-                        onPress={() => handleMarkPaid(item)}
-                        style={[styles.statusBadge, styles.overdueBadge]}
-                      >
-                        <Text style={styles.overdueBadgeText}>
-                          {Math.abs(item.daysDiff)}d OVERDUE • MARK PAID
-                        </Text>
-                      </Pressable>
-                    ) : (
-                      <Pressable
-                        onPress={() => handleMarkPaid(item)}
-                        style={[styles.statusBadge, styles.payActionBadge]}
-                      >
-                        <Text style={styles.payActionBadgeText}>MARK PAID</Text>
-                      </Pressable>
-                    )}
+                      {/* Status Badge or Mark Paid Action */}
+                      {item.is_paid === 1 ? (
+                        <View style={[styles.statusBadge, styles.paidBadge]}>
+                          <Ionicons name="checkmark-circle" size={12} color="#059669" />
+                          <Text style={styles.paidBadgeText}>PAID</Text>
+                        </View>
+                      ) : item.statusTag === 'overdue' ? (
+                        <Pressable
+                          onPress={() => handleMarkPaid(item)}
+                          style={[styles.statusBadge, styles.overdueBadge]}
+                        >
+                          <Text style={styles.overdueBadgeText}>
+                            {Math.abs(item.daysDiff)}d OVERDUE • MARK PAID
+                          </Text>
+                        </Pressable>
+                      ) : (
+                        <Pressable
+                          onPress={() => handleMarkPaid(item)}
+                          style={[styles.statusBadge, styles.payActionBadge]}
+                        >
+                          <Text style={styles.payActionBadgeText}>MARK PAID</Text>
+                        </Pressable>
+                      )}
+                    </View>
+
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleDeleteBill(item.id, item.name, item.notification_id);
+                      }}
+                      style={({ pressed }) => [{ padding: 6, marginLeft: 4 }, pressed && { opacity: 0.6 }]}
+                      hitSlop={8}
+                    >
+                      <Ionicons name="trash-outline" size={18} color={EthosColors.outline} />
+                    </Pressable>
                   </View>
                 </Pressable>
               );
@@ -661,8 +745,9 @@ const styles = StyleSheet.create({
     color: EthosColors.outline,
   },
   billRight: {
-    alignItems: 'flex-end',
-    gap:        4,
+    flexDirection: 'row',
+    alignItems:    'center',
+    gap:           4,
   },
   billAmount: {
     ...EthosTypography.bodyMd,

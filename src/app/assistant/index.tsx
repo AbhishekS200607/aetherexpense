@@ -16,9 +16,11 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSQLiteContext } from 'expo-sqlite';
 import { eq } from 'drizzle-orm';
@@ -157,171 +159,180 @@ export default function AssistantScreen() {
     setBudgetSuggestions((prev) => prev.filter((b) => b.categoryId !== categoryId));
   };
 
+  const insets = useSafeAreaInsets();
+  const bottomPadding = Math.max(insets.bottom, 12);
+
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.navBtn}>
-          <Ionicons name="arrow-back" size={24} color={EthosColors.onSurface} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Local Financial Intelligence</Text>
-        <View style={{ width: 32 }} />
-      </View>
-
-      <ScrollView
-        ref={scrollViewRef}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <Stack.Screen options={{ headerShown: false }} />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {/* ─── Financial Health Score Card ──────────────────────────────── */}
-        {healthScore && (
-          <View style={styles.healthCard}>
-            <View style={styles.healthHeader}>
-              <View style={styles.healthScoreChip}>
-                <Text style={styles.scoreNumber}>{healthScore.score}</Text>
-                <Text style={styles.scoreMax}>/100</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.healthLabel}>FINANCIAL HEALTH</Text>
-                <Text style={styles.healthRating}>{healthScore.rating}</Text>
-              </View>
-            </View>
-
-            {healthScore.positives.map((pos, idx) => (
-              <Text key={idx} style={styles.positiveText}>{pos}</Text>
-            ))}
-            {healthScore.attentionItems.map((att, idx) => (
-              <Text key={idx} style={styles.attentionText}>{att}</Text>
-            ))}
-          </View>
-        )}
-
-        {/* ─── Financial Anomaly & Insight Cards ───────────────────────── */}
-        {insights.map((ins) => (
-          <View key={ins.id} style={styles.insightCard}>
-            <View style={styles.insightHeader}>
-              <Ionicons
-                name={ins.type === 'warning' ? 'warning-outline' : 'sparkles-outline'}
-                size={20}
-                color={ins.type === 'warning' ? EthosColors.error : EthosColors.primary}
-              />
-              <Text style={styles.insightTitle}>{ins.title}</Text>
-            </View>
-            <Text style={styles.insightBody}>{ins.message}</Text>
-          </View>
-        ))}
-
-        {/* ─── Smart Budget Suggestions Carousel ───────────────────────── */}
-        {budgetSuggestions.length > 0 && (
-          <View style={styles.sectionWrap}>
-            <Text style={styles.sectionTitle}>Smart Budget Suggestions</Text>
-            {budgetSuggestions.map((sugg) => (
-              <View key={sugg.categoryId} style={styles.suggestionCard}>
-                <View style={styles.suggestionHeader}>
-                  <View style={styles.catIconBox}>
-                    <Ionicons name={sugg.categoryIcon as any} size={20} color={EthosColors.primary} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.suggCatName}>{sugg.categoryName}</Text>
-                    <Text style={styles.suggReason}>{sugg.reasoning}</Text>
-                  </View>
-                  <Text style={styles.suggAmount}>{sugg.suggestedFormatted}</Text>
-                </View>
-
-                <View style={styles.suggActions}>
-                  <Pressable
-                    onPress={() => handleDismissBudget(sugg.categoryId)}
-                    style={styles.dismissBtn}
-                  >
-                    <Text style={styles.dismissText}>Dismiss</Text>
-                  </Pressable>
-
-                  <Pressable
-                    onPress={() => handleAcceptBudget(sugg)}
-                    style={styles.acceptBtn}
-                  >
-                    <Text style={styles.acceptText}>Accept Budget</Text>
-                  </Pressable>
-                </View>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* ─── Chat Conversation Area ────────────────────────────────────── */}
-        {chatHistory.map((item, idx) => (
-          <View key={idx} style={styles.chatMessageWrap}>
-            {/* User Question */}
-            <View style={styles.userBubble}>
-              <Text style={styles.userText}>{item.questionText}</Text>
-            </View>
-
-            {/* Assistant Answer Card */}
-            <View style={styles.assistantCard}>
-              <View style={styles.assistantTitleRow}>
-                <Ionicons name="sparkles" size={16} color={EthosColors.primary} />
-                <Text style={styles.assistantTitle}>Offline Intelligence</Text>
-              </View>
-
-              <Text style={styles.answerText}>{item.answerText}</Text>
-
-              {item.metrics && (
-                <View style={styles.metricsRow}>
-                  {item.metrics.map((m, mIdx) => (
-                    <View key={mIdx} style={styles.metricChip}>
-                      <Text style={styles.metricLabel}>{m.label}</Text>
-                      <Text style={styles.metricVal}>{m.value}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
-          </View>
-        ))}
-
-        {/* ─── Suggested Questions Chips ────────────────────────────────── */}
-        <View style={styles.sectionWrap}>
-          <Text style={styles.sectionTitle}>Suggested Questions</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-            {SUGGESTED_QUESTIONS.map((q, idx) => (
-              <Pressable
-                key={idx}
-                onPress={() => handleAskQuestion(q)}
-                style={({ pressed }) => [styles.questionChip, pressed && styles.chipPressed]}
-              >
-                <Text style={styles.questionText}>{q}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
+        {/* Header */}
+        <View style={styles.header}>
+          <Pressable onPress={() => router.back()} style={styles.navBtn}>
+            <Ionicons name="arrow-back" size={24} color={EthosColors.onSurface} />
+          </Pressable>
+          <Text style={styles.headerTitle}>Local Financial Intelligence</Text>
+          <View style={{ width: 32 }} />
         </View>
-      </ScrollView>
 
-      {/* ─── Query Input Toolbar ────────────────────────────────────────── */}
-      <View style={styles.inputToolbar}>
-        <TextInput
-          value={inputQuery}
-          onChangeText={setInputQuery}
-          placeholder="Ask about your spending, savings, budgets..."
-          placeholderTextColor={EthosColors.outline}
-          style={styles.queryInput}
-          onSubmitEditing={() => handleAskQuestion(inputQuery)}
-        />
-        <Pressable
-          onPress={() => handleAskQuestion(inputQuery)}
-          disabled={!inputQuery.trim() || loading}
-          style={({ pressed }) => [
-            styles.sendBtn,
-            (!inputQuery.trim() || loading) && { opacity: 0.4 },
-            pressed && { opacity: 0.8 },
-          ]}
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          {loading ? (
-            <ActivityIndicator size="small" color={EthosColors.onPrimary} />
-          ) : (
-            <Ionicons name="arrow-up" size={20} color={EthosColors.onPrimary} />
+          {/* ─── Financial Health Score Card ──────────────────────────────── */}
+          {healthScore && (
+            <View style={styles.healthCard}>
+              <View style={styles.healthHeader}>
+                <View style={styles.healthScoreChip}>
+                  <Text style={styles.scoreNumber}>{healthScore.score}</Text>
+                  <Text style={styles.scoreMax}>/100</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.healthLabel}>FINANCIAL HEALTH</Text>
+                  <Text style={styles.healthRating}>{healthScore.rating}</Text>
+                </View>
+              </View>
+
+              {healthScore.positives.map((pos, idx) => (
+                <Text key={idx} style={styles.positiveText}>{pos}</Text>
+              ))}
+              {healthScore.attentionItems.map((att, idx) => (
+                <Text key={idx} style={styles.attentionText}>{att}</Text>
+              ))}
+            </View>
           )}
-        </Pressable>
-      </View>
+
+          {/* ─── Financial Anomaly & Insight Cards ───────────────────────── */}
+          {insights.map((ins) => (
+            <View key={ins.id} style={styles.insightCard}>
+              <View style={styles.insightHeader}>
+                <Ionicons
+                  name={ins.type === 'warning' ? 'warning-outline' : 'sparkles-outline'}
+                  size={20}
+                  color={ins.type === 'warning' ? EthosColors.error : EthosColors.primary}
+                />
+                <Text style={styles.insightTitle}>{ins.title}</Text>
+              </View>
+              <Text style={styles.insightBody}>{ins.message}</Text>
+            </View>
+          ))}
+
+          {/* ─── Smart Budget Suggestions Carousel ───────────────────────── */}
+          {budgetSuggestions.length > 0 && (
+            <View style={styles.sectionWrap}>
+              <Text style={styles.sectionTitle}>Smart Budget Suggestions</Text>
+              {budgetSuggestions.map((sugg) => (
+                <View key={sugg.categoryId} style={styles.suggestionCard}>
+                  <View style={styles.suggestionHeader}>
+                    <View style={styles.catIconBox}>
+                      <Ionicons name={sugg.categoryIcon as any} size={20} color={EthosColors.primary} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.suggCatName}>{sugg.categoryName}</Text>
+                      <Text style={styles.suggReason}>{sugg.reasoning}</Text>
+                    </View>
+                    <Text style={styles.suggAmount}>{sugg.suggestedFormatted}</Text>
+                  </View>
+
+                  <View style={styles.suggActions}>
+                    <Pressable
+                      onPress={() => handleDismissBudget(sugg.categoryId)}
+                      style={styles.dismissBtn}
+                    >
+                      <Text style={styles.dismissText}>Dismiss</Text>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={() => handleAcceptBudget(sugg)}
+                      style={styles.acceptBtn}
+                    >
+                      <Text style={styles.acceptText}>Accept Budget</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* ─── Chat Conversation Area ────────────────────────────────────── */}
+          {chatHistory.map((item, idx) => (
+            <View key={idx} style={styles.chatMessageWrap}>
+              {/* User Question */}
+              <View style={styles.userBubble}>
+                <Text style={styles.userText}>{item.questionText}</Text>
+              </View>
+
+              {/* Assistant Answer Card */}
+              <View style={styles.assistantCard}>
+                <View style={styles.assistantTitleRow}>
+                  <Ionicons name="sparkles" size={16} color={EthosColors.primary} />
+                  <Text style={styles.assistantTitle}>Offline Intelligence</Text>
+                </View>
+
+                <Text style={styles.answerText}>{item.answerText}</Text>
+
+                {item.metrics && (
+                  <View style={styles.metricsRow}>
+                    {item.metrics.map((m, mIdx) => (
+                      <View key={mIdx} style={styles.metricChip}>
+                        <Text style={styles.metricLabel}>{m.label}</Text>
+                        <Text style={styles.metricVal}>{m.value}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            </View>
+          ))}
+
+          {/* ─── Suggested Questions Chips ────────────────────────────────── */}
+          <View style={styles.sectionWrap}>
+            <Text style={styles.sectionTitle}>Suggested Questions</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+              {SUGGESTED_QUESTIONS.map((q, idx) => (
+                <Pressable
+                  key={idx}
+                  onPress={() => handleAskQuestion(q)}
+                  style={({ pressed }) => [styles.questionChip, pressed && styles.chipPressed]}
+                >
+                  <Text style={styles.questionText}>{q}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        </ScrollView>
+
+        {/* ─── Query Input Toolbar ────────────────────────────────────────── */}
+        <View style={[styles.inputToolbar, { paddingBottom: bottomPadding }]}>
+          <TextInput
+            value={inputQuery}
+            onChangeText={setInputQuery}
+            placeholder="Ask about your spending, savings, budgets..."
+            placeholderTextColor={EthosColors.outline}
+            style={styles.queryInput}
+            onSubmitEditing={() => handleAskQuestion(inputQuery)}
+          />
+          <Pressable
+            onPress={() => handleAskQuestion(inputQuery)}
+            disabled={!inputQuery.trim() || loading}
+            style={({ pressed }) => [
+              styles.sendBtn,
+              (!inputQuery.trim() || loading) && { opacity: 0.4 },
+              pressed && { opacity: 0.8 },
+            ]}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color={EthosColors.onPrimary} />
+            ) : (
+              <Ionicons name="arrow-up" size={20} color={EthosColors.onPrimary} />
+            )}
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

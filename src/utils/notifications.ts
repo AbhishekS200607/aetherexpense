@@ -7,6 +7,7 @@
  * Uses lazy require & environment detection to ensure route imports never crash in Expo Go.
  */
 
+import { Platform } from 'react-native';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { getPrivacyMode } from './security';
 
@@ -31,6 +32,15 @@ if (!isExpoGo) {
           shouldShowList: true,
         }),
       });
+    }
+
+    if (Platform.OS === 'android' && Notifications && typeof Notifications.setNotificationChannelAsync === 'function') {
+      Notifications.setNotificationChannelAsync('default', {
+        name: 'Bill Reminders',
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#6366F1',
+      }).catch((err: any) => console.warn('[Notifications] Android channel setup warning:', err));
     }
   } catch (err) {
     console.warn('[Notifications] Could not load expo-notifications in current environment:', err);
@@ -103,10 +113,11 @@ export async function scheduleBillNotification(
     // Schedule local notification
     const notificationId = await Notifications.scheduleNotificationAsync({
       content: {
-        title: notifTitle,
-        body:  notifBody,
-        sound: true,
-        data:  { billId },
+        title:     notifTitle,
+        body:      notifBody,
+        sound:     true,
+        channelId: 'default',
+        data:      { billId },
       },
       trigger: triggerDate as any,
     });

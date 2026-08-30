@@ -108,23 +108,57 @@ export default function AddBillScreen() {
       const billId = generateUUID();
       const minorAmount = toMinorUnits(amount);
       const formattedAmt = formatCurrency(minorAmount, currencyCode);
+      const cleanDueDate = dueDate.trim() || todayISO();
+
+      // Fallback category resolution
+      let finalCatId: string | null = selectedCatId || null;
+      if (!finalCatId && catList.length > 0) {
+        finalCatId = catList[0].id;
+      }
+      if (!finalCatId) {
+        const fallbackCats = await db
+          .select()
+          .from(categories)
+          .where(and(eq(categories.type, 'expense'), eq(categories.is_active, 1)))
+          .limit(1);
+        if (fallbackCats.length > 0) finalCatId = fallbackCats[0].id;
+      }
+
+      // Fallback account resolution
+      let finalAccId: string | null = selectedAccId || null;
+      if (!finalAccId && accList.length > 0) {
+        finalAccId = accList[0].id;
+      }
+      if (!finalAccId) {
+        const fallbackAccs = await db
+          .select()
+          .from(accounts)
+          .where(eq(accounts.is_active, 1))
+          .limit(1);
+        if (fallbackAccs.length > 0) finalAccId = fallbackAccs[0].id;
+      }
 
       // Schedule local notification if reminder date is in future
-      const notifId = await scheduleBillNotification(
-        billId,
-        name.trim(),
-        formattedAmt,
-        dueDate || todayISO(),
-        1
-      );
+      let notifId: string | null = null;
+      try {
+        notifId = await scheduleBillNotification(
+          billId,
+          name.trim(),
+          formattedAmt,
+          cleanDueDate,
+          1
+        );
+      } catch (notifErr) {
+        console.warn('[AddBillScreen] Notification scheduling warning:', notifErr);
+      }
 
       await db.insert(bills).values({
         id:                      billId,
         name:                    name.trim(),
         amount:                  minorAmount,
-        category_id:             selectedCatId || null,
-        account_id:              selectedAccId || null,
-        due_date:                dueDate || todayISO(),
+        category_id:             finalCatId,
+        account_id:              finalAccId,
+        due_date:                cleanDueDate,
         frequency,
         note:                    note || null,
         is_paid:                 0,
@@ -143,7 +177,7 @@ export default function AddBillScreen() {
       router.back();
     } catch (err) {
       console.error('[AddBillScreen] Save error:', err);
-      Alert.alert('Error', 'Could not create bill.');
+      Alert.alert('Error', 'Could not create bill: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setSaving(false);
     }

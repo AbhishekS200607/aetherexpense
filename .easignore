@@ -1,0 +1,23 @@
+# Ignore dependencies & build outputs
+node_modules/
+.expo/
+dist/
+web-build/
+android/
+ios/
+
+# Ignore VCS & IDE config
+.git/
+.vscode/
+.claude/
+.idea/
+AGENTS.md
+CLAUDE.md
+
+# Ignore temporary assets & logs
+*.log
+.tempmediaStorage/
+npm-debug.*
+yarn-debug.*
+*.apk
+*.aab

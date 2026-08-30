@@ -1,56 +1,100 @@
-# Welcome to your Expo app 👋
+# 🌌 AetherExpense — Track. Manage. Grow.
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+> **100% Offline, Privacy-First Personal Finance & Expense Tracker built for Mobile.**
 
-## Get started
+![AetherExpense Banner](./assets/images/icon.png)
 
-1. Install dependencies
+AetherExpense is a modern, high-performance expense manager designed around privacy, financial precision, and effortless UX. Built with **React Native (Expo SDK 57)** and powered by an **offline local SQLite engine**, your financial data stays 100% on your device.
 
+---
+
+## ✨ Features
+
+- 🔒 **100% Offline & Private**: Zero cloud dependencies, zero remote APIs for app logic. All database transactions execute locally in SQLite.
+- 💰 **Paise-Level Financial Precision**: All monetary amounts are calculated and stored as Minor Unit Integers (e.g. ₹100.50 is stored as `10050` paise) to prevent floating-point rounding errors.
+- 🤖 **AI Assistant**: Smart financial assistant for transaction insights, spending summaries, and budgeting advice.
+- 🔔 **Bills & Reminders**: Track upcoming utility bills, subscriptions, EMIs, and rent. Automated local device push notifications remind you before due dates.
+- 🔁 **Recurring Rules Engine**: Automated management of daily, weekly, monthly, and yearly recurring expenses and income.
+- 📊 **Interactive Analytics**: Visual charts, category breakdowns, monthly trends, and budget progress meters.
+- 📷 **Receipt OCR & Attachment**: Capture or upload receipt photos directly linked to transactions.
+- 💳 **Multi-Account & Wallet Support**: Manage Cash, Savings Accounts, Credit Cards, and UPI Wallets seamlessly.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Framework**: [Expo SDK 57](https://docs.expo.dev/) (React Native, React 18, React Compiler)
+- **Navigation**: [Expo Router v4](https://docs.expo.dev/router/introduction/) (File-based routing)
+- **Database & ORM**: `expo-sqlite` + [Drizzle ORM](https://orm.drizzle.team/)
+- **State Management**: [Zustand](https://github.com/pmndrs/zustand)
+- **UI & Animations**: React Native Reanimated, Expo Vector Icons, Safe Area Context
+- **Notifications**: `expo-notifications` (Android Channels & iOS Triggered Reminders)
+- **Build System**: EAS Build & EAS Update (Over-the-Air OTA updates)
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js `v18+` or `v20+`
+- npm or yarn
+- Expo Go app on mobile or Android Studio / Xcode emulator
+
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/AbhishekS200607/aetherexpense.git
+   cd aetherexpense
+   ```
+
+2. **Install dependencies:**
    ```bash
    npm install
    ```
 
-2. Start the app
-
+3. **Start the development server:**
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+---
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## 📱 Building & Deploying
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+### OTA Updates (Over-The-Air)
+Deploy instant updates to installed Android devices:
 ```bash
-npm run reset-project
+eas update --platform android --branch preview --message "Fixed bills and UI enhancements"
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Standalone Android APK Build
+Build a standalone `.apk` for direct installation on Android devices:
+```bash
+eas build --platform android --profile preview
+```
 
-### Other setup steps
+---
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## 📁 Architecture Overview
 
-## Learn more
+```
+aetherexpense/
+├── assets/images/       # App logo, adaptive icons, and splash screens
+├── src/
+│   ├── app/             # Expo Router screens (Tabs, Bills, Assistant, Recurring)
+│   ├── components/      # UI components (Cards, Animations, Dialogs)
+│   ├── database/        # Drizzle ORM schema, migrations, and SQLite client
+│   ├── store/           # Zustand global state management
+│   ├── theme/           # Ethos design system, tokens, and typography
+│   └── utils/           # Currency, date, UUID, and notification helpers
+├── app.json             # Expo configuration & native permissions
+└── eas.json             # EAS Build & Update profiles
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+---
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## 📄 License
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+This project is open-source under the MIT License.

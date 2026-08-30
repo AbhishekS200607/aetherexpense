@@ -59,14 +59,15 @@ export function SuccessAnimation({
         withSpring(1.0, { damping: 12, stiffness: 200 })
       );
 
-      // 4. Auto finish after 1.5 seconds
-      const timer = setTimeout(() => {
-        opacity.value = withTiming(0, { duration: 250 }, () => {
+      // 4. Auto finish after 1.5 seconds safely on JS thread
+      const finishTimer = setTimeout(() => {
+        opacity.value = withTiming(0, { duration: 200 });
+        setTimeout(() => {
           onFinish();
-        });
-      }, 1500);
+        }, 220);
+      }, 1300);
 
-      return () => clearTimeout(timer);
+      return () => clearTimeout(finishTimer);
     } else {
       scale.value = 0;
       opacity.value = 0;

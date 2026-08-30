@@ -26,7 +26,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { eq } from 'drizzle-orm';
 
 import { createDrizzleDB } from '@/database/client';
-import { bills } from '@/database/schema';
+import { bills, transactions } from '@/database/schema';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useAppStore } from '@/store/appStore';
 import {
@@ -157,6 +157,13 @@ export default function EditBillScreen() {
       await cancelBillNotification(bill?.notification_id);
 
       const db = createDrizzleDB(sqliteDb);
+
+      // Unlink past transactions referencing this bill
+      await db
+        .update(transactions)
+        .set({ bill_id: null })
+        .where(eq(transactions.bill_id, id));
+
       await db.delete(bills).where(eq(bills.id, id));
 
       invalidateData();

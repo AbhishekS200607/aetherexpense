@@ -17,6 +17,7 @@ import {
   Pressable,
   StyleSheet,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -25,7 +26,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { eq } from 'drizzle-orm';
 
 import { createDrizzleDB } from '@/database/client';
-import { recurringTransactions, categories, accounts } from '@/database/schema';
+import { recurringTransactions, categories, accounts, transactions, bills } from '@/database/schema';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useAppStore } from '@/store/appStore';
 import {
@@ -126,6 +127,43 @@ export default function RecurringScreen() {
   const onRefresh = () => {
     setRefreshing(true);
     fetchRecurringData();
+  };
+
+  const handleDeleteRule = (ruleId: string, ruleTitle: string) => {
+    Alert.alert(
+      'Delete Recurring Rule?',
+      `Are you sure you want to delete "${ruleTitle}"? Past generated transactions will not be deleted.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            if (!sqliteDb) return;
+            try {
+              const db = createDrizzleDB(sqliteDb);
+              await db
+                .update(transactions)
+                .set({ recurring_id: null })
+                .where(eq(transactions.recurring_id, ruleId));
+
+              await db
+                .update(bills)
+                .set({ recurring_id: null })
+                .where(eq(bills.recurring_id, ruleId));
+
+              await db.delete(recurringTransactions).where(eq(recurringTransactions.id, ruleId));
+
+              fetchRecurringData();
+              useAppStore.getState().invalidateData();
+            } catch (err) {
+              console.error('[RecurringScreen] Error deleting rule:', err);
+              Alert.alert('Error', 'Could not delete recurring rule.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   // Group expense vs income rules
@@ -260,12 +298,21 @@ export default function RecurringScreen() {
                     </View>
 
                     <View style={styles.ruleRight}>
-                      <Text style={styles.ruleAmount}>
-                        {formatCurrency(item.amount, currencyCode)}
-                      </Text>
-                      <Text style={styles.ruleNextDate}>
-                        Next: {formatNextDate(item.next_run_date)}
-                      </Text>
+                      <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={styles.ruleAmount}>
+                          {formatCurrency(item.amount, currencyCode)}
+                        </Text>
+                        <Text style={styles.ruleNextDate}>
+                          Next: {formatNextDate(item.next_run_date)}
+                        </Text>
+                      </View>
+                      <Pressable
+                        onPress={() => handleDeleteRule(item.id, titleText)}
+                        style={({ pressed }) => [{ padding: 6, marginLeft: 4 }, pressed && { opacity: 0.6 }]}
+                        hitSlop={8}
+                      >
+                        <Ionicons name="trash-outline" size={18} color={EthosColors.outline} />
+                      </Pressable>
                     </View>
                   </Pressable>
                 );
@@ -323,12 +370,21 @@ export default function RecurringScreen() {
                     </View>
 
                     <View style={styles.ruleRight}>
-                      <Text style={[styles.ruleAmount, { color: '#2E7D32' }]}>
-                        +{formatCurrency(item.amount, currencyCode)}
-                      </Text>
-                      <Text style={styles.ruleNextDate}>
-                        Next: {formatNextDate(item.next_run_date)}
-                      </Text>
+                      <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={[styles.ruleAmount, { color: '#2E7D32' }]}>
+                          +{formatCurrency(item.amount, currencyCode)}
+                        </Text>
+                        <Text style={styles.ruleNextDate}>
+                          Next: {formatNextDate(item.next_run_date)}
+                        </Text>
+                      </View>
+                      <Pressable
+                        onPress={() => handleDeleteRule(item.id, titleText)}
+                        style={({ pressed }) => [{ padding: 6, marginLeft: 4 }, pressed && { opacity: 0.6 }]}
+                        hitSlop={8}
+                      >
+                        <Ionicons name="trash-outline" size={18} color={EthosColors.outline} />
+                      </Pressable>
                     </View>
                   </Pressable>
                 );
@@ -476,8 +532,9 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   ruleRight: {
-    alignItems: 'flex-end',
-    gap:        2,
+    flexDirection: 'row',
+    alignItems:    'center',
+    gap:           4,
   },
   ruleAmount: {
     ...EthosTypography.bodyMd,

@@ -390,6 +390,13 @@ export default function RootLayout() {
                   headerShown: false,
                 }}
               />
+              <Stack.Screen
+                name="assistant/index"
+                options={{
+                  title: 'AI Assistant',
+                  headerShown: false,
+                }}
+              />
             </Stack>
           </View>
         </DatabaseInitializer>

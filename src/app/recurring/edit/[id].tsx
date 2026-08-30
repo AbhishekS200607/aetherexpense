@@ -26,7 +26,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { eq } from 'drizzle-orm';
 
 import { createDrizzleDB } from '@/database/client';
-import { recurringTransactions, categories, accounts } from '@/database/schema';
+import { recurringTransactions, categories, accounts, transactions, bills } from '@/database/schema';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useAppStore } from '@/store/appStore';
 import {
@@ -148,10 +148,24 @@ export default function EditRecurringScreen() {
     if (!id) return;
     try {
       const db = createDrizzleDB(sqliteDb);
-      // Soft-delete or remove rule record without touching generated transactions
+
+      // 1. Unlink past transactions referencing this recurring rule
+      await db
+        .update(transactions)
+        .set({ recurring_id: null })
+        .where(eq(transactions.recurring_id, id));
+
+      // 2. Unlink bills referencing this recurring rule
+      await db
+        .update(bills)
+        .set({ recurring_id: null })
+        .where(eq(bills.recurring_id, id));
+
+      // 3. Delete recurring rule
       await db.delete(recurringTransactions).where(eq(recurringTransactions.id, id));
 
       invalidateData();
+      setShowDelete(false);
       router.back();
     } catch (err) {
       console.error('[EditRecurringScreen] Delete error:', err);
