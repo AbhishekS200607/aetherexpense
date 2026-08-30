@@ -70,6 +70,23 @@ function DatabaseInitializer({ children }: { children: React.ReactNode }) {
 
     async function initialize() {
       try {
+        // Ensure missing table columns exist on SQLite for older database instances
+        try {
+          await sqliteDb.execAsync('ALTER TABLE bills ADD COLUMN notification_id TEXT;');
+        } catch (e) {}
+
+        try {
+          await sqliteDb.execAsync('ALTER TABLE bills ADD COLUMN recurring_id TEXT;');
+        } catch (e) {}
+
+        try {
+          await sqliteDb.execAsync('ALTER TABLE transactions ADD COLUMN bill_id TEXT;');
+        } catch (e) {}
+
+        try {
+          await sqliteDb.execAsync('ALTER TABLE transactions ADD COLUMN recurring_id TEXT;');
+        } catch (e) {}
+
         // Seed default categories and settings (idempotent)
         await seedDatabase(db);
 

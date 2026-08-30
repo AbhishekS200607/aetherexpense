@@ -152,26 +152,56 @@ export default function AddBillScreen() {
         console.warn('[AddBillScreen] Notification scheduling warning:', notifErr);
       }
 
-      await db.insert(bills).values({
-        id:                      billId,
-        name:                    name.trim(),
-        amount:                  minorAmount,
-        category_id:             finalCatId,
-        account_id:              finalAccId,
-        due_date:                cleanDueDate,
-        frequency,
-        note:                    note || null,
-        is_paid:                 0,
-        paid_date:               null,
-        auto_create_transaction: autoCreateTxn ? 1 : 0,
-        transaction_id:          null,
-        is_active:               1,
-        reminder_days_before:    1,
-        notification_id:         notifId,
-        recurring_id:            null,
-        created_at:              now,
-        updated_at:              now,
-      });
+      try {
+        await db.insert(bills).values({
+          id:                      billId,
+          name:                    name.trim(),
+          amount:                  minorAmount,
+          category_id:             finalCatId,
+          account_id:              finalAccId,
+          due_date:                cleanDueDate,
+          frequency,
+          note:                    note || null,
+          is_paid:                 0,
+          paid_date:               null,
+          auto_create_transaction: autoCreateTxn ? 1 : 0,
+          transaction_id:          null,
+          is_active:               1,
+          reminder_days_before:    1,
+          notification_id:         notifId,
+          recurring_id:            null,
+          created_at:              now,
+          updated_at:              now,
+        });
+      } catch (insertErr) {
+        console.warn('[AddBillScreen] Drizzle insert failed, attempting raw SQL migration fallback:', insertErr);
+        // Ensure column exists first
+        try {
+          await sqliteDb.execAsync('ALTER TABLE bills ADD COLUMN notification_id TEXT;');
+        } catch (e) {}
+
+        await sqliteDb.runAsync(
+          `INSERT INTO bills (id, name, amount, category_id, account_id, due_date, frequency, note, is_paid, paid_date, auto_create_transaction, transaction_id, is_active, reminder_days_before, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            billId,
+            name.trim(),
+            minorAmount,
+            finalCatId || '',
+            finalAccId || '',
+            cleanDueDate,
+            frequency,
+            note || null,
+            0,
+            null,
+            autoCreateTxn ? 1 : 0,
+            null,
+            1,
+            1,
+            now,
+            now,
+          ]
+        );
+      }
 
       invalidateData();
       router.back();

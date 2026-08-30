@@ -58,7 +58,11 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "type-check": "tsc --noEmit",
+    "build:apk": "eas build -p android --profile preview",
+    "build:apk:prod": "eas build -p android --profile production-apk",
+    "build:apk:local": "expo run:android --variant release"
   },
   "private": true
 }
