@@ -8,9 +8,10 @@
 
 import { eq, and, gte, lte, sql, desc, count } from 'drizzle-orm';
 import type { DrizzleDB } from '@/database/client';
-import { transactions, categories, budgets, accounts } from '@/database/schema';
+import { transactions, categories, budgets, accounts, bills } from '@/database/schema';
 import { currentMonthRange, todayISO, getMonthRange } from '@/utils/dates';
 import { formatCurrency } from '@/utils/currency';
+import { calculateAccountBalance } from '@/utils/accounts';
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -326,7 +327,232 @@ export async function parseNaturalLanguageQuery(
   const query = queryText.toLowerCase().trim();
   const metrics = await getMonthlyMetrics(db);
 
-  // Intent 1: Monthly Spending ("how much did i spend", "total expenses")
+  // 1. Overspending Check & Actionable Insights ("am i overspending", "where spending too much")
+  if (
+    query.includes('overspend') ||
+    query.includes('too much') ||
+    query.includes('spending too much') ||
+    query.includes('over budget')
+  ) {
+    const activeBudgets = await db
+      .select({
+        id:            budgets.id,
+        name:          budgets.name,
+        amount:        budgets.amount,
+        category_id:   budgets.category_id,
+        category_name: categories.name,
+      })
+      .from(budgets)
+      .leftJoin(categories, eq(budgets.category_id, categories.id))
+      .where(eq(budgets.is_active, 1));
+
+    const { from, to } = currentMonthRange();
+    const overspentList: Array<{ name: string; amountPaise: number; spentPaise: number; overPaise: number; pct: number }> = [];
+
+    for (const b of activeBudgets) {
+      if (b.category_id) {
+        const spentRes = await db
+          .select({ total: sql<number>`SUM(amount)` })
+          .from(transactions)
+          .where(
+            and(
+              eq(transactions.type, 'expense'),
+              eq(transactions.category_id, b.category_id),
+              gte(transactions.date, from),
+              lte(transactions.date, to)
+            )
+          );
+        const spent = Number(spentRes[0]?.total ?? 0);
+        if (spent > b.amount) {
+          const over = spent - b.amount;
+          const pct = Math.round((spent / b.amount) * 100);
+          overspentList.push({
+            name: b.category_name || b.name,
+            amountPaise: b.amount,
+            spentPaise: spent,
+            overPaise: over,
+            pct,
+          });
+        }
+      }
+    }
+
+    if (overspentList.length > 0) {
+      const primary = overspentList[0];
+      const details = overspentList
+        .map((o) => `${o.name} is ${formatCurrency(o.overPaise, currencyCode)} over your ${formatCurrency(o.amountPaise, currencyCode)} budget (${o.pct}% used)`)
+        .join('; ');
+
+      return {
+        intent:       'overspending_check',
+        questionText: queryText,
+        answerText:   `Yes, you are overspending: ${details}. Reducing ${primary.name} delivery or non-essential purchases by ${formatCurrency(primary.overPaise, currencyCode)}/month will bring you back within budget.`,
+        metrics:      overspentList.map((o) => ({
+          label: `${o.name} Overspent`,
+          value: `+${formatCurrency(o.overPaise, currencyCode)}`,
+        })),
+        supported: true,
+      };
+    } else if (metrics.totalExpensePaise > metrics.totalIncomePaise && metrics.totalIncomePaise > 0) {
+      const over = metrics.totalExpensePaise - metrics.totalIncomePaise;
+      return {
+        intent:       'overspending_check',
+        questionText: queryText,
+        answerText:   `Your total monthly expenses (${formatCurrency(metrics.totalExpensePaise, currencyCode)}) exceed your total income (${formatCurrency(metrics.totalIncomePaise, currencyCode)}) by ${formatCurrency(over, currencyCode)}. Consider cutting back on discretionary spending.`,
+        metrics:      [{ label: 'Monthly Deficit', value: formatCurrency(over, currencyCode) }],
+        supported:    true,
+      };
+    } else {
+      return {
+        intent:       'overspending_check',
+        questionText: queryText,
+        answerText:   `Great news! None of your active category budgets are overspent, and your monthly spending (${formatCurrency(metrics.totalExpensePaise, currencyCode)}) is within your total income.`,
+        metrics:      [{ label: 'Savings Rate', value: `${metrics.savingsRatePercent}%` }],
+        supported:    true,
+      };
+    }
+  }
+
+  // 2. Upcoming Bills & Effective Available Liquidity ("bills coming up", "left after bills", "upcoming bills")
+  if (
+    query.includes('bill') ||
+    query.includes('due') ||
+    query.includes('after bill') ||
+    query.includes('after upcoming') ||
+    query.includes('upcoming')
+  ) {
+    const unpaidBills = await db
+      .select()
+      .from(bills)
+      .where(and(eq(bills.is_paid, 0), eq(bills.is_active, 1)));
+
+    const totalBillsPaise = unpaidBills.reduce((acc, b) => acc + Number(b.amount), 0);
+
+    // Compute Account Balances
+    const allAccounts = await db.select().from(accounts).where(eq(accounts.is_active, 1));
+    const allTxns = await db.select({
+      id:                     transactions.id,
+      type:                   transactions.type,
+      amount:                 transactions.amount,
+      account_id:             transactions.account_id,
+      transfer_to_account_id: transactions.transfer_to_account_id,
+    }).from(transactions);
+
+    let totalAccountBalancePaise = 0;
+    for (const acc of allAccounts) {
+      totalAccountBalancePaise += calculateAccountBalance(acc.opening_balance, acc.id, allTxns as any);
+    }
+
+    const effectiveAvailablePaise = Math.max(0, totalAccountBalancePaise - totalBillsPaise);
+
+    if (unpaidBills.length > 0) {
+      const billSummary = unpaidBills
+        .slice(0, 3)
+        .map((b) => `${b.name} (${formatCurrency(b.amount, currencyCode)})`)
+        .join(', ');
+
+      return {
+        intent:       'upcoming_bills_liquidity',
+        questionText: queryText,
+        answerText:   `Your total account balance is ${formatCurrency(totalAccountBalancePaise, currencyCode)}. However, you have ${unpaidBills.length} unpaid upcoming bill(s) totaling ${formatCurrency(totalBillsPaise, currencyCode)} (${billSummary}). Your safe available cash after upcoming bills is ${formatCurrency(effectiveAvailablePaise, currencyCode)}.`,
+        metrics: [
+          { label: 'Total Balance',        value: formatCurrency(totalAccountBalancePaise, currencyCode) },
+          { label: 'Upcoming Bills',       value: formatCurrency(totalBillsPaise, currencyCode) },
+          { label: 'Safe Available Cash',  value: formatCurrency(effectiveAvailablePaise, currencyCode) },
+        ],
+        supported: true,
+      };
+    } else {
+      return {
+        intent:       'upcoming_bills_liquidity',
+        questionText: queryText,
+        answerText:   `You have no unpaid upcoming bills recorded! Your full account balance of ${formatCurrency(totalAccountBalancePaise, currencyCode)} is safe and available.`,
+        metrics:      [{ label: 'Safe Available Cash', value: formatCurrency(totalAccountBalancePaise, currencyCode) }],
+        supported:    true,
+      };
+    }
+  }
+
+  // 3. Safe Weekly Spend ("how much can i spend this week", "weekly budget", "spend this week")
+  if (
+    query.includes('weekly') ||
+    query.includes('this week') ||
+    query.includes('spend this week') ||
+    query.includes('safe to spend')
+  ) {
+    const today = new Date();
+    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+    const daysLeft = Math.max(1, daysInMonth - today.getDate() + 1);
+    const weeksLeft = Math.max(1, Math.ceil(daysLeft / 7));
+
+    const allAccounts = await db.select().from(accounts).where(eq(accounts.is_active, 1));
+    const allTxns = await db.select({
+      id:                     transactions.id,
+      type:                   transactions.type,
+      amount:                 transactions.amount,
+      account_id:             transactions.account_id,
+      transfer_to_account_id: transactions.transfer_to_account_id,
+    }).from(transactions);
+
+    let totalBalancePaise = 0;
+    for (const acc of allAccounts) {
+      totalBalancePaise += calculateAccountBalance(acc.opening_balance, acc.id, allTxns as any);
+    }
+
+    const safeWeeklyPaise = Math.round(totalBalancePaise / weeksLeft);
+    return {
+      intent:       'safe_weekly_spend',
+      questionText: queryText,
+      answerText:   `Based on your total available account balance of ${formatCurrency(totalBalancePaise, currencyCode)} over the remaining ${weeksLeft} week(s) of this month, your recommended safe weekly spending limit is ${formatCurrency(safeWeeklyPaise, currencyCode)}.`,
+      metrics: [
+        { label: 'Safe Weekly Limit', value: formatCurrency(safeWeeklyPaise, currencyCode) },
+        { label: 'Remaining Weeks',  value: `${weeksLeft} week(s)` },
+      ],
+      supported: true,
+    };
+  }
+
+  // 4. Actionable Category Reduction ("which category should i reduce", "where to cut")
+  if (query.includes('reduce') || query.includes('cut') || query.includes('lower spending')) {
+    const { from, to } = currentMonthRange();
+    const topCats = await db
+      .select({
+        name:  categories.name,
+        total: sql<number>`SUM(${transactions.amount})`,
+      })
+      .from(transactions)
+      .innerJoin(categories, eq(transactions.category_id, categories.id))
+      .where(
+        and(
+          eq(transactions.type, 'expense'),
+          gte(transactions.date, from),
+          lte(transactions.date, to)
+        )
+      )
+      .groupBy(categories.id)
+      .orderBy(desc(sql`SUM(${transactions.amount})`))
+      .limit(3);
+
+    if (topCats.length > 0) {
+      const topCat = topCats[0];
+      const topPaise = Number(topCat.total);
+      const targetSavingsPaise = Math.round(topPaise * 0.2); // 20% reduction target
+
+      return {
+        intent:       'category_reduction_advice',
+        questionText: queryText,
+        answerText:   `You are spending the most on ${topCat.name} (${formatCurrency(topPaise, currencyCode)} this month). Cutting back by 20% on ${topCat.name} would save you ${formatCurrency(targetSavingsPaise, currencyCode)} every month.`,
+        metrics: [
+          { label: 'Target Category',      value: topCat.name },
+          { label: 'Current Spend',        value: formatCurrency(topPaise, currencyCode) },
+          { label: 'Potential Monthly Savings', value: formatCurrency(targetSavingsPaise, currencyCode) },
+        ],
+        supported: true,
+      };
+    }
+  }
+
+  // 5. Monthly Spending ("how much did i spend", "total expenses")
   if (query.includes('spend') || query.includes('expense') || query.includes('spent')) {
     if (query.includes('food') || query.includes('eating') || query.includes('dining')) {
       const { from, to } = currentMonthRange();
@@ -364,7 +590,7 @@ export async function parseNaturalLanguageQuery(
     };
   }
 
-  // Intent 2: Savings ("how much did i save", "savings rate")
+  // 6. Savings ("how much did i save", "savings rate")
   if (query.includes('save') || query.includes('savings')) {
     return {
       intent:       'savings_summary',
@@ -378,7 +604,7 @@ export async function parseNaturalLanguageQuery(
     };
   }
 
-  // Intent 3: Highest Category / Where spent most ("where did i spend the most")
+  // 7. Highest Category / Where spent most ("where did i spend the most")
   if (query.includes('where') || query.includes('most') || query.includes('top category')) {
     const { from, to } = currentMonthRange();
     const topCats = await db
@@ -418,19 +644,19 @@ export async function parseNaturalLanguageQuery(
     };
   }
 
-  // Intent 4: Budget Recommendations ("budget", "what should my budget be")
-  if (query.includes('budget') || query.includes('recommend')) {
+  // 8. Budget Recommendations & Comprehensive Generator ("budget", "what should my budget be", "create a realistic budget")
+  if (query.includes('budget') || query.includes('recommend') || query.includes('create a budget')) {
     const suggestions = await generateSmartBudgetSuggestions(db, currencyCode);
     return {
       intent:       'budget_suggestions',
       questionText: queryText,
-      answerText:   'Here are your personalized smart budget recommendations calculated from your 3-month historical spending:',
+      answerText:   'Here is your realistic smart budget for next month calculated from your historical spending. Fixed obligations (Rent, Bills) are locked, while controllable categories (Food, Shopping) include actionable reduction targets:',
       suggestions,
       supported:    true,
     };
   }
 
-  // Intent 5: Affordability Check ("can i afford 5000", "can i buy")
+  // 9. Affordability Check ("can i afford 5000", "can i buy")
   const affordMatch = query.match(/afford\s*₹?\s*([\d,]+)/i);
   if (affordMatch && affordMatch[1]) {
     const amountVal = parseFloat(affordMatch[1].replace(/,/g, ''));
@@ -444,7 +670,7 @@ export async function parseNaturalLanguageQuery(
         ? `Yes! Based on your current net savings of ${formatCurrency(metrics.netSavingsPaise, currencyCode)} this month, you can comfortably afford ${formatCurrency(amountPaise, currencyCode)}.`
         : `Caution: Spending ${formatCurrency(amountPaise, currencyCode)} would exceed your current net savings of ${formatCurrency(metrics.netSavingsPaise, currencyCode)} for this month.`,
       metrics: [
-        { label: 'Requested Amount', value: formatCurrency(amountPaise, currencyCode) },
+        { label: 'Requested Amount',   value: formatCurrency(amountPaise, currencyCode) },
         { label: 'Current Net Savings', value: formatCurrency(metrics.netSavingsPaise, currencyCode) },
       ],
       supported: true,
@@ -455,7 +681,7 @@ export async function parseNaturalLanguageQuery(
   return {
     intent:       'unknown',
     questionText: queryText,
-    answerText:   'Offline Assistant: I can help answer queries about your monthly spending, savings rate, top categories, budget recommendations, and affordability. Try asking "How much did I save this month?" or "What should my budget be?".',
+    answerText:   'Offline Assistant: I can help answer queries about your monthly spending, savings rate, overspending alerts, upcoming bills, safe weekly limits, and category reductions. Try asking "Where am I spending too much?" or "How much money do I have left after upcoming bills?".',
     supported:    false,
   };
 }
