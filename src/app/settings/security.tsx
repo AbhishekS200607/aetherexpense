@@ -21,6 +21,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
+import { useAppStore } from '@/store/appStore';
 import {
   EthosColors,
   EthosTypography,
@@ -45,6 +46,7 @@ import {
 } from '@/utils/security';
 
 export default function SecuritySettingsScreen() {
+  const invalidateData = useAppStore((s) => s.invalidateData);
   const [lockType, setLockTypeState] = useState<LockType>('off');
   const [autoLockDelay, setAutoLockDelayState] = useState(0);
   const [privacyMode, setPrivacyModeState] = useState(false);
@@ -90,6 +92,7 @@ export default function SecuritySettingsScreen() {
       } else {
         await setLockType('off');
         setLockTypeState('off');
+        invalidateData();
       }
     } else if (targetType === 'pin') {
       const isConfigured = await hasPinConfigured();
@@ -101,6 +104,7 @@ export default function SecuritySettingsScreen() {
       } else {
         await setLockType('pin');
         setLockTypeState('pin');
+        invalidateData();
       }
     } else if (targetType === 'biometric') {
       if (!biometricInfo.hardwareSupported || !biometricInfo.enrolled) {
@@ -120,6 +124,7 @@ export default function SecuritySettingsScreen() {
       } else {
         await setLockType('biometric');
         setLockTypeState('biometric');
+        invalidateData();
       }
     }
   };
@@ -128,12 +133,14 @@ export default function SecuritySettingsScreen() {
   const handleSelectAutoLock = async (delay: number) => {
     await setAutoLockDelay(delay);
     setAutoLockDelayState(delay);
+    invalidateData();
   };
 
   // Privacy Mode Toggle
   const handleTogglePrivacy = async (val: boolean) => {
     await setPrivacyMode(val);
     setPrivacyModeState(val);
+    invalidateData();
   };
 
   // PIN Modal Submission
@@ -152,6 +159,7 @@ export default function SecuritySettingsScreen() {
       await setLockType(targetType);
       setLockTypeState(targetType);
       setShowPinModal(false);
+      invalidateData();
       Alert.alert('App Lock Enabled', 'App lock configured successfully.');
     } else if (pinMode === 'change_pin') {
       const isValid = await verifyPin(oldPinInput);
@@ -169,6 +177,7 @@ export default function SecuritySettingsScreen() {
       }
       await setPinHash(newPinInput);
       setShowPinModal(false);
+      invalidateData();
       Alert.alert('PIN Updated', 'Your PIN has been changed successfully.');
     } else if (pinMode === 'disable_lock') {
       const isValid = await verifyPin(oldPinInput);
@@ -180,6 +189,7 @@ export default function SecuritySettingsScreen() {
       await clearPinHash();
       setLockTypeState('off');
       setShowPinModal(false);
+      invalidateData();
       Alert.alert('App Lock Disabled', 'App lock has been turned off.');
     }
   };

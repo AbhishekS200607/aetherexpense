@@ -154,7 +154,6 @@ export default function RootLayout() {
 
   // Initial Lock Check on Launch
   useEffect(() => {
-    if (!dbReady) return;
     async function checkInitialLock() {
       const lType = await getLockType();
       setLockTypeState(lType);

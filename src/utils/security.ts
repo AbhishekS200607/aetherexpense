@@ -57,9 +57,18 @@ export async function clearPinHash(): Promise<void> {
 export type LockType = 'off' | 'pin' | 'biometric';
 
 export async function getLockType(): Promise<LockType> {
-  const val = await SecureStore.getItemAsync(LOCK_TYPE_KEY);
-  if (val === 'pin' || val === 'biometric') return val;
-  return 'off';
+  try {
+    const val = await SecureStore.getItemAsync(LOCK_TYPE_KEY);
+    const hasPin = await hasPinConfigured();
+    if (hasPin) {
+      if (val === 'biometric') return 'biometric';
+      return 'pin';
+    }
+    return 'off';
+  } catch (err) {
+    console.warn('[Security] Error getting lock type:', err);
+    return 'off';
+  }
 }
 
 export async function setLockType(type: LockType): Promise<void> {
