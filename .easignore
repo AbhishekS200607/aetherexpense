@@ -11,13 +11,17 @@ ios/
 .vscode/
 .claude/
 .idea/
+.agents/
 AGENTS.md
 CLAUDE.md
+*.md
 
-# Ignore temporary assets & logs
+# Ignore temporary assets, artifacts, and logs
 *.log
 .tempmediaStorage/
 npm-debug.*
 yarn-debug.*
 *.apk
 *.aab
+*.zip
+*.tar.gz
