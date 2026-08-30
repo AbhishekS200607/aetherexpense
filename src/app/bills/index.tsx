@@ -158,7 +158,47 @@ export default function BillsScreen() {
 
       setBillList(items);
     } catch (err) {
-      console.error('[BillsScreen] Error loading bills:', err);
+      console.warn('[BillsScreen] Drizzle join failed, executing raw SQL fallback:', err);
+      try {
+        const today = todayISO();
+        const todayObj = new Date(today);
+        const rawRows = await sqliteDb.getAllAsync<any>(
+          `SELECT b.id, b.name, b.amount, b.due_date, b.frequency, b.note, b.is_paid, b.paid_date, b.auto_create_transaction, b.transaction_id, b.category_id, b.account_id, c.name as category_name, c.icon as category_icon, a.name as account_name FROM bills b LEFT JOIN categories c ON b.category_id = c.id LEFT JOIN accounts a ON b.account_id = a.id WHERE b.is_active = 1 OR b.is_active IS NULL`
+        );
+        const fallbackItems: BillItem[] = (rawRows || []).map((b) => {
+          const dueObj = new Date(b.due_date);
+          const diffMs = dueObj.getTime() - todayObj.getTime();
+          const daysDiff = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+          let statusTag: 'overdue' | 'due_soon' | 'upcoming' | 'paid' = 'upcoming';
+          if (b.is_paid === 1) statusTag = 'paid';
+          else if (daysDiff < 0) statusTag = 'overdue';
+          else if (daysDiff <= 7) statusTag = 'due_soon';
+
+          return {
+            id:                      b.id,
+            name:                    b.name,
+            amount:                  b.amount,
+            due_date:                b.due_date,
+            frequency:               b.frequency,
+            note:                    b.note,
+            is_paid:                 b.is_paid,
+            paid_date:               b.paid_date,
+            auto_create_transaction: b.auto_create_transaction ?? 1,
+            transaction_id:          b.transaction_id || null,
+            notification_id:         null,
+            category_id:             b.category_id,
+            category_name:           b.category_name || 'General',
+            category_icon:           b.category_icon || 'receipt-outline',
+            account_id:              b.account_id,
+            account_name:            b.account_name || 'Account',
+            statusTag,
+            daysDiff,
+          };
+        });
+        setBillList(fallbackItems);
+      } catch (fallbackErr) {
+        console.error('[BillsScreen] Critical fallback error loading bills:', fallbackErr);
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);

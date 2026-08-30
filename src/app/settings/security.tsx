@@ -47,6 +47,7 @@ import {
 
 export default function SecuritySettingsScreen() {
   const invalidateData = useAppStore((s) => s.invalidateData);
+  const setIsLocked = useAppStore((s) => s.setIsLocked);
   const [lockType, setLockTypeState] = useState<LockType>('off');
   const [autoLockDelay, setAutoLockDelayState] = useState(0);
   const [privacyMode, setPrivacyModeState] = useState(false);
@@ -160,7 +161,16 @@ export default function SecuritySettingsScreen() {
       setLockTypeState(targetType);
       setShowPinModal(false);
       invalidateData();
-      Alert.alert('App Lock Enabled', 'App lock configured successfully.');
+      Alert.alert(
+        'App Lock Enabled',
+        'App lock configured successfully. The screen will now lock.',
+        [
+          {
+            text: 'OK',
+            onPress: () => setIsLocked(true),
+          },
+        ]
+      );
     } else if (pinMode === 'change_pin') {
       const isValid = await verifyPin(oldPinInput);
       if (!isValid) {
@@ -206,6 +216,22 @@ export default function SecuritySettingsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* ─── Lock App Now Direct Action ──────────────────────────────────── */}
+        {lockType !== 'off' && (
+          <View style={{ marginBottom: EthosSpacing.stackLg }}>
+            <Pressable
+              onPress={() => setIsLocked(true)}
+              style={({ pressed }) => [
+                styles.lockNowBtn,
+                pressed && { opacity: 0.8 },
+              ]}
+            >
+              <Ionicons name="lock-closed" size={20} color="#FFFFFF" />
+              <Text style={styles.lockNowText}>Lock App Now (Test Security)</Text>
+            </Pressable>
+          </View>
+        )}
+
         {/* ─── App Lock Selector ────────────────────────────────────────────── */}
         <View style={styles.sectionWrap}>
           <Text style={styles.sectionTitle}>App Lock Mode</Text>
@@ -249,10 +275,10 @@ export default function SecuritySettingsScreen() {
             <Text style={styles.sectionTitle}>Auto-Lock Delay</Text>
             <View style={styles.bentoCard}>
               {[
-                { delay: 0,   label: 'Immediately on Background' },
-                { delay: 60,  label: 'After 1 Minute' },
-                { delay: 300, label: 'After 5 Minutes' },
-                { delay: 900, label: 'After 15 Minutes' },
+                { delay: 0,   label: 'Immediately on Background', sub: 'Locks as soon as you exit or switch away' },
+                { delay: 60,  label: 'After 1 Minute',            sub: 'Locks if in background for 1+ minute' },
+                { delay: 300, label: 'After 5 Minutes',           sub: 'Locks if in background for 5+ minutes' },
+                { delay: 900, label: 'After 15 Minutes',          sub: 'Locks if in background for 15+ minutes' },
               ].map((opt, idx) => {
                 const active = autoLockDelay === opt.delay;
                 const isLast = idx === 3;
@@ -266,7 +292,10 @@ export default function SecuritySettingsScreen() {
                       pressed && styles.rowPressed,
                     ]}
                   >
-                    <Text style={[styles.rowTitle, { flex: 1 }]}>{opt.label}</Text>
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Text style={styles.rowTitle}>{opt.label}</Text>
+                      <Text style={styles.rowSubtext}>{opt.sub}</Text>
+                    </View>
                     <Ionicons
                       name={active ? 'radio-button-on' : 'radio-button-off'}
                       size={20}
@@ -542,5 +571,25 @@ const styles = StyleSheet.create({
     ...EthosTypography.labelMd,
     fontWeight: '600',
     color:      EthosColors.onPrimary,
+  },
+  lockNowBtn: {
+    backgroundColor: EthosColors.primary,
+    borderRadius:    EthosRadius.md,
+    paddingVertical: 14,
+    paddingHorizontal: EthosSpacing.containerPadding,
+    flexDirection:   'row',
+    alignItems:      'center',
+    justifyContent:  'center',
+    gap:             8,
+    shadowColor:     EthosColors.primary,
+    shadowOffset:    { width: 0, height: 4 },
+    shadowOpacity:   0.3,
+    shadowRadius:    8,
+    elevation:       4,
+  },
+  lockNowText: {
+    ...EthosTypography.labelMd,
+    color:      '#FFFFFF',
+    fontWeight: '600',
   },
 });

@@ -45,56 +45,73 @@ SplashScreen.preventAutoHideAsync();
 
 // ─── Database Initializer ─────────────────────────────────────────────────────
 
+let initInvocationCount = 0;
+
 /**
  * Runs inside SQLiteProvider. Has access to the SQLite context.
  * Runs Drizzle migrations, then seeds the DB and loads settings into Zustand.
  */
 function DatabaseInitializer({ children }: { children: React.ReactNode }) {
   const sqliteDb = useSQLiteContext();
-  const db = React.useMemo(() => createDrizzleDB(sqliteDb), [sqliteDb]);
-  const { success: migrationsSuccess, error: migrationsError } = useMigrations(db, migrations);
+  const db = React.useMemo(() => {
+    if (!sqliteDb) {
+      console.error('[DB Init] sqliteDb is null or undefined!');
+      return null;
+    }
+    return createDrizzleDB(sqliteDb);
+  }, [sqliteDb]);
+
+  const { success: migrationsSuccess, error: migrationsError } = useMigrations(
+    db!,
+    migrations
+  );
+
   const setDbReady = useAppStore((s) => s.setDbReady);
   const updateSettings = useSettingsStore((s) => s.updateSettings);
   const setHydrated = useSettingsStore((s) => s.setHydrated);
 
-  useEffect(() => {
-    console.log('[APP START] Initializing DatabaseInitializer');
-    console.log('[SQLite OPEN] SQLiteProvider initialized');
-    console.log('[MIGRATIONS START] Running Drizzle migrations...');
-  }, []);
+  const isInitializingRef = useRef(false);
+  const hasInitializedRef = useRef(false);
 
   useEffect(() => {
-    if (!migrationsSuccess) return;
+    initInvocationCount++;
+    console.log(`[DB Init] Initializing DatabaseInitializer (Invocation Count: ${initInvocationCount}, DB_NAME: "${DB_NAME}")`);
+    console.log(`[DB Init] Drizzle DB valid: ${db !== null}, sqliteDb valid: ${sqliteDb !== null}`);
+  }, [db, sqliteDb]);
 
-    console.log('[MIGRATIONS SUCCESS] Drizzle migrations completed successfully');
+  useEffect(() => {
+    // CRITICAL: DO NOT execute seeding, ALTER statements, or queries until migrations complete successfully!
+    if (!migrationsSuccess || !sqliteDb || !db) {
+      if (migrationsError) {
+        console.error('[Migrations Error] Drizzle migration failed:', migrationsError);
+      } else {
+        console.log('[MIGRATIONS START] Waiting for Drizzle migrations to complete...');
+      }
+      return;
+    }
+
+    if (hasInitializedRef.current || isInitializingRef.current) {
+      console.log('[DB Init] Initialization already in progress or completed. Skipping duplicate call.');
+      return;
+    }
 
     async function initialize() {
+      isInitializingRef.current = true;
+      console.log('[DB Init] Database initialization START');
+
       try {
-        // Ensure missing table columns exist on SQLite for older database instances
-        try {
-          await sqliteDb.execAsync('ALTER TABLE bills ADD COLUMN notification_id TEXT;');
-        } catch (e) {}
-
-        try {
-          await sqliteDb.execAsync('ALTER TABLE bills ADD COLUMN recurring_id TEXT;');
-        } catch (e) {}
-
-        try {
-          await sqliteDb.execAsync('ALTER TABLE transactions ADD COLUMN bill_id TEXT;');
-        } catch (e) {}
-
-        try {
-          await sqliteDb.execAsync('ALTER TABLE transactions ADD COLUMN recurring_id TEXT;');
-        } catch (e) {}
+        console.log('[MIGRATIONS END] Drizzle migrations finished successfully');
 
         // Seed default categories and settings (idempotent)
-        await seedDatabase(db);
+        console.log('[SEED START] Seeding default database data...');
+        await seedDatabase(db!);
+        console.log('[SEED END] Database seeding completed successfully');
 
-        // Auto-generate due recurring transactions cleanly
-        await processRecurringTransactions(db);
+        // Auto-generate due recurring transactions
+        await processRecurringTransactions(db!);
 
         // Load persisted settings into Zustand store
-        const rows = await db.select().from(settings);
+        const rows = await db!.select().from(settings);
         const settingsMap: Partial<AppSettings> = {};
         for (const row of rows) {
           const key = row.key as keyof AppSettings;
@@ -109,23 +126,27 @@ function DatabaseInitializer({ children }: { children: React.ReactNode }) {
             (settingsMap as any)[key] = value;
           }
         }
+
         updateSettings(settingsMap);
         setHydrated(true);
         setDbReady(true);
-        console.log('[DATABASE READY] Database seeded and store hydrated');
+        hasInitializedRef.current = true;
+        console.log('[DB Init] Database initialization END — Database ready & hydrated');
       } catch (err) {
-        console.error('[DB Init] Error during initialization:', err);
+        console.error('[DB Init] Error during database initialization:', err);
         setHydrated(true);
-        setDbReady(true);
-        console.log('[DATABASE READY] Fallback database ready after error');
+        setDbReady(false);
+        useAppStore.getState().setError(`Database initialization failure: ${err instanceof Error ? err.message : String(err)}`);
+      } finally {
+        isInitializingRef.current = false;
       }
     }
 
     initialize();
-  }, [migrationsSuccess, db, setDbReady, setHydrated, updateSettings]);
+  }, [migrationsSuccess, migrationsError, sqliteDb, db, setDbReady, setHydrated, updateSettings]);
 
   if (migrationsError) {
-    console.error('[Migrations] Error running migrations:', migrationsError);
+    console.warn('[Migrations Notice] Drizzle migrations error:', migrationsError);
   }
 
   return <>{children}</>;
@@ -146,52 +167,91 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const dbReady = useAppStore((s) => s.dbReady);
   const dataVersion = useAppStore((s) => s.dataVersion);
+  const isLocked = useAppStore((s) => s.isLocked);
+  const setIsLocked = useAppStore((s) => s.setIsLocked);
   const themeMode = useSettingsStore((s) => s.theme);
 
-  const [isLocked, setIsLocked] = useState(false);
   const [lockType, setLockTypeState] = useState<LockType>('off');
+  const [securityChecked, setSecurityChecked] = useState(false);
   const backgroundTimestamp = useRef<number | null>(null);
 
   // Initial Lock Check on Launch
   useEffect(() => {
     async function checkInitialLock() {
-      const lType = await getLockType();
-      setLockTypeState(lType);
-      if (lType !== 'off') {
-        setIsLocked(true);
+      if (!dbReady) return;
+      try {
+        const lType = await getLockType();
+        setLockTypeState(lType);
+        if (lType !== 'off') {
+          setIsLocked(true);
+        } else {
+          setIsLocked(false);
+        }
+      } catch (err) {
+        console.warn('[Security] Check failed on launch:', err);
+      } finally {
+        setSecurityChecked(true);
       }
     }
     checkInitialLock();
-  }, [dbReady, dataVersion]);
+  }, [dbReady]);
 
   // AppState Listener for Background Auto-Lock Timer
   useEffect(() => {
     const sub = AppState.addEventListener('change', async (nextState) => {
-      if (nextState === 'background' || nextState === 'inactive') {
-        backgroundTimestamp.current = Date.now();
+      console.log(`[APPSTATE] state changed to: ${nextState}`);
+      const lType = await getLockType();
+      setLockTypeState(lType);
+      if (lType === 'off') return;
+
+      const delay = await getAutoLockDelay();
+
+      if (nextState === 'background') {
+        console.log('[APPSTATE] background');
+        if (delay === 0) {
+          console.log('[APPLOCK] locking (Immediate on background)');
+          setIsLocked(true);
+        } else if (!backgroundTimestamp.current) {
+          backgroundTimestamp.current = Date.now();
+        }
       } else if (nextState === 'active') {
-        const lType = await getLockType();
-        setLockTypeState(lType);
-        if (lType !== 'off' && backgroundTimestamp.current) {
-          const delay = await getAutoLockDelay();
+        console.log('[APPSTATE] active');
+        if (backgroundTimestamp.current) {
           const elapsedSec = (Date.now() - backgroundTimestamp.current) / 1000;
           if (elapsedSec >= delay) {
+            console.log(`[APPLOCK] locking (Elapsed: ${elapsedSec}s >= Delay: ${delay}s)`);
             setIsLocked(true);
+          } else {
+            console.log(`[APPLOCK] unlocked (Elapsed: ${elapsedSec}s < Delay: ${delay}s)`);
           }
         }
         backgroundTimestamp.current = null;
       }
     });
     return () => sub.remove();
-  }, []);
+  }, [setIsLocked]);
 
   const effectiveScheme =
     themeMode === 'system' ? colorScheme : themeMode;
   const colors = effectiveScheme === 'dark' ? DarkColors : LightColors;
 
-  // Hide Splash Screen when database is ready and fonts are loaded
+  // Memoized SQLiteProvider onInit handler to prevent Provider recreation on RootLayout re-renders
+  const handleSQLiteInit = useCallback(async (db: any) => {
+    console.log('[SQLITE] provider mounted / onInit executing');
+    await db.execAsync('PRAGMA journal_mode = WAL;');
+    await db.execAsync('PRAGMA foreign_keys = ON;');
+  }, []);
+
   useEffect(() => {
-    if (dbReady && fontsLoaded) {
+    console.log('[SQLITE] provider mounted');
+    return () => {
+      console.log('[SQLITE] provider unmounted');
+    };
+  }, []);
+
+  // Hide Splash Screen ONLY when DB is ready, fonts are loaded, AND security check has completed!
+  useEffect(() => {
+    if (dbReady && fontsLoaded && securityChecked) {
       SplashScreen.hideAsync()
         .then(() => {
           console.log('[SPLASH HIDDEN] SplashScreen hidden, rendering Dashboard');
@@ -200,24 +260,20 @@ export default function RootLayout() {
           console.warn('[SplashScreen] Error hiding splash screen:', err);
         });
     }
-  }, [dbReady, fontsLoaded]);
+  }, [dbReady, fontsLoaded, securityChecked]);
 
   const onLayoutRootView = useCallback(async () => {
-    if (dbReady && fontsLoaded) {
+    if (dbReady && fontsLoaded && securityChecked) {
       await SplashScreen.hideAsync().catch(() => {});
     }
-  }, [dbReady, fontsLoaded]);
+  }, [dbReady, fontsLoaded, securityChecked]);
 
   return (
     <GestureHandlerRootView style={styles.root}>
       <SQLiteProvider
         databaseName={DB_NAME}
         useSuspense={false}
-        onInit={async (db) => {
-          // Enable WAL mode for better concurrent read performance
-          await db.execAsync('PRAGMA journal_mode = WAL;');
-          await db.execAsync('PRAGMA foreign_keys = ON;');
-        }}
+        onInit={handleSQLiteInit}
       >
         <DatabaseInitializer>
           <View
@@ -231,7 +287,7 @@ export default function RootLayout() {
             />
 
             <LockScreen
-              visible={isLocked}
+              visible={isLocked && lockType !== 'off'}
               lockType={lockType}
               onUnlock={() => setIsLocked(false)}
             />

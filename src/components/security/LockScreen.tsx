@@ -14,6 +14,7 @@ import {
   StyleSheet,
   Alert,
   Vibration,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -72,7 +73,7 @@ export function LockScreen({ visible, lockType, onUnlock }: LockScreenProps) {
     return () => clearInterval(timer);
   }, [lockoutSeconds]);
 
-  if (!visible) return null;
+  // Remove early return so Modal remains mounted natively
 
   const triggerBiometrics = async () => {
     const success = await authenticateBiometric('Unlock AetherExpense');
@@ -92,6 +93,7 @@ export function LockScreen({ visible, lockType, onUnlock }: LockScreenProps) {
 
     if (newPin.length === 4) {
       const isValid = await verifyPin(newPin);
+      console.log('[APPLOCK] PIN verification result:', isValid ? 'SUCCESS' : 'FAILED');
       if (isValid) {
         setPin('');
         setFailedCount(0);
@@ -118,8 +120,11 @@ export function LockScreen({ visible, lockType, onUnlock }: LockScreenProps) {
     }
   };
 
+  if (!visible) return null;
+
   return (
-    <View style={styles.overlay}>
+    <Modal visible={visible} animationType="fade" statusBarTranslucent onRequestClose={() => {}}>
+      <View style={styles.overlay}>
       {/* Top Header */}
       <View style={styles.headerWrap}>
         <View style={styles.lockIconChip}>
@@ -219,6 +224,7 @@ export function LockScreen({ visible, lockType, onUnlock }: LockScreenProps) {
         </View>
       </View>
     </View>
+    </Modal>
   );
 }
 

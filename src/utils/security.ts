@@ -14,6 +14,34 @@ const LOCK_TYPE_KEY = 'aetherexpense_lock_type'; // 'off' | 'pin' | 'biometric'
 const AUTO_LOCK_DELAY_KEY = 'aetherexpense_auto_lock_delay'; // 0 | 60 | 300 | 900
 const PRIVACY_MODE_KEY = 'aetherexpense_privacy_mode'; // 'true' | 'false'
 
+/** Helper for resilient key retrieval */
+async function getItem(key: string): Promise<string | null> {
+  try {
+    return await SecureStore.getItemAsync(key);
+  } catch (e) {
+    console.warn(`[Security] Error getting item for ${key}:`, e);
+    return null;
+  }
+}
+
+/** Helper for resilient key storage */
+async function setItem(key: string, value: string): Promise<void> {
+  try {
+    await SecureStore.setItemAsync(key, value);
+  } catch (e) {
+    console.warn(`[Security] Error setting item for ${key}:`, e);
+  }
+}
+
+/** Helper for resilient key deletion */
+async function removeItem(key: string): Promise<void> {
+  try {
+    await SecureStore.deleteItemAsync(key);
+  } catch (e) {
+    console.warn(`[Security] Error deleting item for ${key}:`, e);
+  }
+}
+
 /**
  * Derives a secure SHA-like hash string from raw PIN using salt.
  * Never stores raw PIN strings.
@@ -34,22 +62,22 @@ function hashPIN(pin: string): string {
 
 export async function setPinHash(pin: string): Promise<void> {
   const hashed = hashPIN(pin);
-  await SecureStore.setItemAsync(PIN_HASH_KEY, hashed);
+  await setItem(PIN_HASH_KEY, hashed);
 }
 
 export async function verifyPin(pin: string): Promise<boolean> {
-  const storedHash = await SecureStore.getItemAsync(PIN_HASH_KEY);
+  const storedHash = await getItem(PIN_HASH_KEY);
   if (!storedHash) return false;
   return storedHash === hashPIN(pin);
 }
 
 export async function hasPinConfigured(): Promise<boolean> {
-  const storedHash = await SecureStore.getItemAsync(PIN_HASH_KEY);
+  const storedHash = await getItem(PIN_HASH_KEY);
   return storedHash !== null && storedHash.length > 0;
 }
 
 export async function clearPinHash(): Promise<void> {
-  await SecureStore.deleteItemAsync(PIN_HASH_KEY);
+  await removeItem(PIN_HASH_KEY);
 }
 
 // ─── Security Settings Secure Storage ─────────────────────────────────────────
@@ -58,7 +86,8 @@ export type LockType = 'off' | 'pin' | 'biometric';
 
 export async function getLockType(): Promise<LockType> {
   try {
-    const val = await SecureStore.getItemAsync(LOCK_TYPE_KEY);
+    const val = await getItem(LOCK_TYPE_KEY);
+    if (val === 'off') return 'off';
     const hasPin = await hasPinConfigured();
     if (hasPin) {
       if (val === 'biometric') return 'biometric';
@@ -67,31 +96,35 @@ export async function getLockType(): Promise<LockType> {
     return 'off';
   } catch (err) {
     console.warn('[Security] Error getting lock type:', err);
+    try {
+      const hasPin = await hasPinConfigured();
+      if (hasPin) return 'pin';
+    } catch (_) {}
     return 'off';
   }
 }
 
 export async function setLockType(type: LockType): Promise<void> {
-  await SecureStore.setItemAsync(LOCK_TYPE_KEY, type);
+  await setItem(LOCK_TYPE_KEY, type);
 }
 
 export async function getAutoLockDelay(): Promise<number> {
-  const val = await SecureStore.getItemAsync(AUTO_LOCK_DELAY_KEY);
+  const val = await getItem(AUTO_LOCK_DELAY_KEY);
   if (val) return parseInt(val, 10);
   return 0; // Immediate default
 }
 
 export async function setAutoLockDelay(seconds: number): Promise<void> {
-  await SecureStore.setItemAsync(AUTO_LOCK_DELAY_KEY, String(seconds));
+  await setItem(AUTO_LOCK_DELAY_KEY, String(seconds));
 }
 
 export async function getPrivacyMode(): Promise<boolean> {
-  const val = await SecureStore.getItemAsync(PRIVACY_MODE_KEY);
+  const val = await getItem(PRIVACY_MODE_KEY);
   return val === 'true';
 }
 
 export async function setPrivacyMode(enabled: boolean): Promise<void> {
-  await SecureStore.setItemAsync(PRIVACY_MODE_KEY, String(enabled));
+  await setItem(PRIVACY_MODE_KEY, String(enabled));
 }
 
 // ─── Local Biometric Authentication ───────────────────────────────────────────

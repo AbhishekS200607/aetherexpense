@@ -319,6 +319,197 @@ export async function detectAnomaliesAndInsights(
 
 // ─── 5. Offline Natural Language Query Engine ─────────────────────────────────
 
+export function extractSalaryFromQuery(queryStr: string): number | null {
+  const q = queryStr.toLowerCase();
+
+  // 1. Check for "60k", "60 k", "60.5k"
+  const kMatch = q.match(/(\d+(?:\.\d+)?)\s*k\b/i);
+  if (kMatch) {
+    const val = parseFloat(kMatch[1]) * 1000;
+    if (val > 0) return val;
+  }
+
+  // 2. Check for "1.5 lakh", "2 L", "2.5lakh"
+  const lakhMatch = q.match(/(\d+(?:\.\d+)?)\s*(?:lakh|l)\b/i);
+  if (lakhMatch) {
+    const val = parseFloat(lakhMatch[1]) * 100000;
+    if (val > 0) return val;
+  }
+
+  // 3. Search for number in queries mentioning salary, earn, make, income, divide, save, budget
+  const isBudgetOrSalaryQuery =
+    q.includes('salary') ||
+    q.includes('earn') ||
+    q.includes('make') ||
+    q.includes('income') ||
+    q.includes('divide') ||
+    q.includes('budget') ||
+    q.includes('save');
+
+  if (isBudgetOrSalaryQuery) {
+    const numMatches = q.match(/[\d,]+/g);
+    if (numMatches) {
+      for (const numStr of numMatches) {
+        const clean = numStr.replace(/,/g, '');
+        const val = parseFloat(clean);
+        // Valid salary threshold (e.g. ₹5,000 to ₹10,000,000)
+        if (val >= 5000 && val <= 10000000) {
+          return val;
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+export function extractExtraFinancialParams(queryStr: string): { rent?: number; emi?: number } {
+  const q = queryStr.toLowerCase();
+  let rent: number | undefined;
+  let emi: number | undefined;
+
+  const rentMatch = q.match(/rent\s*(?:is|=|:)?\s*₹?\s*([\d,]+)(k)?/i);
+  if (rentMatch) {
+    let r = parseFloat(rentMatch[1].replace(/,/g, ''));
+    if (rentMatch[2]) r *= 1000;
+    if (r > 0) rent = r;
+  }
+
+  const emiMatch = q.match(/(?:emi|debt|loan)\s*(?:is|=|:)?\s*₹?\s*([\d,]+)(k)?/i);
+  if (emiMatch) {
+    let e = parseFloat(emiMatch[1].replace(/,/g, ''));
+    if (emiMatch[2]) e *= 1000;
+    if (e > 0) emi = e;
+  }
+
+  return { rent, emi };
+}
+
+export async function generateSalaryBudgetRecommendation(
+  db: DrizzleDB,
+  salary: number,
+  queryText: string,
+  currencyCode = 'INR'
+): Promise<AssistantAnswer> {
+  const { rent, emi } = extractExtraFinancialParams(queryText);
+
+  // Check if user has historical transaction spending in SQLite
+  const pastTxns = await db
+    .select({
+      catName: categories.name,
+      amount: transactions.amount,
+    })
+    .from(transactions)
+    .innerJoin(categories, eq(transactions.category_id, categories.id))
+    .where(eq(transactions.type, 'expense'));
+
+  const hasHistory = pastTxns.length >= 5;
+
+  // Base Allocation Ratios (sum = 1.00)
+  // Baseline: Housing 25%, Food 15%, Transport 10%, Bills 7%, Personal 7%, Entertainment 5%, Health 5%, Savings 17%, Emergency/Investments 10%
+  let categoryRatios: Array<{ name: string; pct: number }> = [
+    { name: 'Housing',               pct: 0.25 },
+    { name: 'Food',                  pct: 0.15 },
+    { name: 'Transport',             pct: 0.10 },
+    { name: 'Bills',                 pct: 0.07 },
+    { name: 'Personal',              pct: 0.07 },
+    { name: 'Entertainment',         pct: 0.05 },
+    { name: 'Health/Insurance',      pct: 0.05 },
+    { name: 'Savings',               pct: 0.17 },
+    { name: 'Emergency/Investments', pct: 0.10 },
+  ];
+
+  // If user provided rent or EMI, dynamically recalculate allocations
+  if (rent || emi) {
+    let allocatedFixed = 0;
+    if (rent) {
+      const housingItem = categoryRatios.find((c) => c.name === 'Housing');
+      if (housingItem) {
+        housingItem.pct = rent / salary;
+        allocatedFixed += housingItem.pct;
+      }
+    }
+    if (emi) {
+      categoryRatios.push({ name: 'Debt/EMI', pct: emi / salary });
+      allocatedFixed += emi / salary;
+    }
+
+    // Scale remaining variable and savings items so total pct === 1.0
+    const remainingPct = Math.max(0.10, 1.0 - allocatedFixed);
+    const unallocatedCategories = categoryRatios.filter((c) => c.name !== 'Housing' && c.name !== 'Debt/EMI');
+    const defaultSum = unallocatedCategories.reduce((acc, c) => acc + c.pct, 0);
+
+    if (defaultSum > 0) {
+      unallocatedCategories.forEach((c) => {
+        c.pct = (c.pct / defaultSum) * remainingPct;
+      });
+    }
+  }
+
+  // Calculate deterministic amounts in whole Rupee units
+  let totalAllocated = 0;
+  const items = categoryRatios.map((c) => {
+    const amount = Math.round(salary * c.pct);
+    totalAllocated += amount;
+    return {
+      name: c.name,
+      amount,
+      pct: Math.round(c.pct * 100),
+    };
+  });
+
+  // Ensure exact sum match down to the last Rupee (add rounding diff to Savings)
+  const diff = salary - totalAllocated;
+  if (diff !== 0) {
+    const savingsItem = items.find((i) => i.name === 'Savings') || items[items.length - 1];
+    if (savingsItem) {
+      savingsItem.amount += diff;
+      savingsItem.pct = Math.round((savingsItem.amount / salary) * 100);
+    }
+  }
+
+  // Total Savings Target = Savings + Emergency/Investments
+  const savingsItem = items.find((i) => i.name === 'Savings');
+  const emergencyItem = items.find((i) => i.name === 'Emergency/Investments');
+  const totalSavingsAmount = (savingsItem?.amount || 0) + (emergencyItem?.amount || 0);
+  const totalSavingsPct = Math.round((totalSavingsAmount / salary) * 100);
+
+  // Format response strings
+  const formattedSalary = formatCurrency(salary * 100, currencyCode).replace(/\.00$/, '');
+  const formattedSavings = formatCurrency(totalSavingsAmount * 100, currencyCode).replace(/\.00$/, '');
+
+  const budgetLines = items
+    .map((item) => {
+      const formattedAmt = formatCurrency(item.amount * 100, currencyCode).replace(/\.00$/, '');
+      return `${item.name}: ${formattedAmt} (${item.pct}%)`;
+    })
+    .join('\n');
+
+  const introHeader = hasHistory
+    ? `Based on your monthly salary of ${formattedSalary} and your actual spending history, here is your personalized budget recommendation:\n`
+    : `With a ${formattedSalary} monthly income, here's a starting budget:\n`;
+
+  const whyExplanation = `Why this recommendation was made:\n` +
+    `• Housing & Fixed Obligations: Kept within baseline limits to maintain core stability.\n` +
+    `• Essential Expenses (Food, Transport, Bills, Health): Ensures daily living, health, and utilities are fully covered.\n` +
+    `• Discretionary Spending (Personal, Entertainment): Allows guilt-free leisure and personal growth.\n` +
+    `• Savings & Emergency/Investments: Allocates ${totalSavingsPct}% (${formattedSavings}/month) to build your 6-month safety net and long-term wealth.`;
+
+  const fullAnswerText = `${introHeader}\n${budgetLines}\n\nTotal: ${formattedSalary}\n\nYour target savings rate is ${formattedSavings}/month (${totalSavingsPct}%).\n\n${whyExplanation}`;
+
+  return {
+    intent:       'income_budget_recommendation',
+    questionText: queryText,
+    answerText:   fullAnswerText,
+    metrics: [
+      { label: 'Monthly Income',       value: formattedSalary },
+      { label: 'Target Savings Rate',  value: `${formattedSavings} (${totalSavingsPct}%)` },
+      { label: 'Total Budgeted',       value: formattedSalary },
+    ],
+    supported: true,
+  };
+}
+
 export async function parseNaturalLanguageQuery(
   db: DrizzleDB,
   queryText: string,
@@ -326,6 +517,24 @@ export async function parseNaturalLanguageQuery(
 ): Promise<AssistantAnswer> {
   const query = queryText.toLowerCase().trim();
   const metrics = await getMonthlyMetrics(db);
+
+  // 0. Income-Based Financial Intelligence & Salary Budget Generation
+  const salaryFromQuery = extractSalaryFromQuery(queryText);
+  const isBudgetIntent =
+    query.includes('salary') ||
+    query.includes('earn') ||
+    query.includes('divide') ||
+    query.includes('make') ||
+    query.includes('how much should i save') ||
+    query.includes('starting budget') ||
+    (query.includes('budget') && (salaryFromQuery !== null || metrics.totalIncomePaise > 0));
+
+  if (isBudgetIntent) {
+    const salaryToUse =
+      salaryFromQuery ??
+      (metrics.totalIncomePaise > 0 ? metrics.totalIncomePaise / 100 : 60000);
+    return await generateSalaryBudgetRecommendation(db, salaryToUse, queryText, currencyCode);
+  }
 
   // 1. Overspending Check & Actionable Insights ("am i overspending", "where spending too much")
   if (

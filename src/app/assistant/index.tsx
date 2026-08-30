@@ -50,10 +50,10 @@ import {
 } from '@/utils/financialIntelligence';
 
 const SUGGESTED_QUESTIONS = [
-  'How much did I spend this month?',
+  'My salary is ₹60,000. What should be my budget?',
   'Where did I spend the most?',
   'How much did I save?',
-  'What should my budget be?',
+  'How should I divide my 60000 salary?',
   'Can I afford ₹5,000?',
 ];
 
