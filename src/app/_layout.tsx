@@ -175,26 +175,27 @@ export default function RootLayout() {
   const [securityChecked, setSecurityChecked] = useState(false);
   const backgroundTimestamp = useRef<number | null>(null);
 
-  // Initial Lock Check on Launch
+  // Security Lock State Synchronization (runs on Launch, Data Invalidation, & Lock Toggle)
   useEffect(() => {
-    async function checkInitialLock() {
+    async function syncSecurityLock() {
       if (!dbReady) return;
       try {
         const lType = await getLockType();
         setLockTypeState(lType);
-        if (lType !== 'off') {
-          setIsLocked(true);
-        } else {
+        if (lType === 'off') {
           setIsLocked(false);
+        } else if (!securityChecked) {
+          // Force lock screen on cold application launch
+          setIsLocked(true);
         }
       } catch (err) {
-        console.warn('[Security] Check failed on launch:', err);
+        console.warn('[Security] Check failed:', err);
       } finally {
         setSecurityChecked(true);
       }
     }
-    checkInitialLock();
-  }, [dbReady]);
+    syncSecurityLock();
+  }, [dbReady, dataVersion, isLocked, setIsLocked, securityChecked]);
 
   // AppState Listener for Background Auto-Lock Timer
   useEffect(() => {
@@ -206,10 +207,10 @@ export default function RootLayout() {
 
       const delay = await getAutoLockDelay();
 
-      if (nextState === 'background') {
-        console.log('[APPSTATE] background');
+      if (nextState === 'background' || nextState === 'inactive') {
+        console.log('[APPSTATE] background or inactive');
         if (delay === 0) {
-          console.log('[APPLOCK] locking (Immediate on background)');
+          console.log('[APPLOCK] locking (Immediate on background/inactive)');
           setIsLocked(true);
         } else if (!backgroundTimestamp.current) {
           backgroundTimestamp.current = Date.now();
@@ -287,7 +288,7 @@ export default function RootLayout() {
             />
 
             <LockScreen
-              visible={isLocked && lockType !== 'off'}
+              visible={isLocked}
               lockType={lockType}
               onUnlock={() => setIsLocked(false)}
             />

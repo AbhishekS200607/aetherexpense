@@ -161,16 +161,8 @@ export default function SecuritySettingsScreen() {
       setLockTypeState(targetType);
       setShowPinModal(false);
       invalidateData();
-      Alert.alert(
-        'App Lock Enabled',
-        'App lock configured successfully. The screen will now lock.',
-        [
-          {
-            text: 'OK',
-            onPress: () => setIsLocked(true),
-          },
-        ]
-      );
+      // Immediately lock the app automatically after setting PIN
+      setIsLocked(true);
     } else if (pinMode === 'change_pin') {
       const isValid = await verifyPin(oldPinInput);
       if (!isValid) {

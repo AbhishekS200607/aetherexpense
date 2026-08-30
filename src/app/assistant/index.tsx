@@ -1,5 +1,5 @@
 /**
- * AetherExpense — Offline Local Financial Intelligence Assistant Screen
+ * AetherExpense — Aether AI (Offline Local Financial Intelligence Copilot)
  *
  * 100% Offline Assistant powered by local SQLite financial data calculations.
  * Supports natural-language financial Q&A, Health Score analysis, Anomaly Detection,
@@ -51,10 +51,10 @@ import {
 
 const SUGGESTED_QUESTIONS = [
   'My salary is ₹60,000. What should be my budget?',
-  'Where did I spend the most?',
+  'Where did I spend the most this month?',
   'How much did I save?',
-  'How should I divide my 60000 salary?',
-  'Can I afford ₹5,000?',
+  'Can I afford ₹5,000 extra expense?',
+  'How should I divide my income?',
 ];
 
 export default function AssistantScreen() {
@@ -106,7 +106,7 @@ export default function AssistantScreen() {
       const answer = await parseNaturalLanguageQuery(db, queryText, currencyCode);
 
       setChatHistory((prev) => [...prev, answer]);
-      setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+      setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 150);
     } catch (err) {
       console.error('[Assistant] Error parsing query:', err);
     } finally {
@@ -169,12 +169,25 @@ export default function AssistantScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {/* Header */}
+        {/* ─── Sleek Header Bar ─────────────────────────────────────────── */}
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} style={styles.navBtn}>
-            <Ionicons name="arrow-back" size={24} color={EthosColors.onSurface} />
+          <Pressable onPress={() => router.back()} style={styles.navBtn} hitSlop={8}>
+            <Ionicons name="arrow-back" size={22} color={EthosColors.onSurface} />
           </Pressable>
-          <Text style={styles.headerTitle}>Local Financial Intelligence</Text>
+
+          <View style={styles.headerCenter}>
+            <View style={styles.avatarChip}>
+              <Ionicons name="sparkles" size={16} color="#FFFFFF" />
+            </View>
+            <View style={{ gap: 1 }}>
+              <Text style={styles.headerTitle}>Aether AI</Text>
+              <View style={styles.onlineBadge}>
+                <View style={styles.greenDot} />
+                <Text style={styles.badgeText}>Offline Copilot</Text>
+              </View>
+            </View>
+          </View>
+
           <View style={{ width: 32 }} />
         </View>
 
@@ -191,17 +204,25 @@ export default function AssistantScreen() {
                   <Text style={styles.scoreNumber}>{healthScore.score}</Text>
                   <Text style={styles.scoreMax}>/100</Text>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.healthLabel}>FINANCIAL HEALTH</Text>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={styles.healthLabel}>FINANCIAL HEALTH SCORE</Text>
                   <Text style={styles.healthRating}>{healthScore.rating}</Text>
                 </View>
               </View>
 
+              <View style={styles.divider} />
+
               {healthScore.positives.map((pos, idx) => (
-                <Text key={idx} style={styles.positiveText}>{pos}</Text>
+                <View key={`pos-${idx}`} style={styles.bulletRow}>
+                  <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                  <Text style={styles.positiveText}>{pos}</Text>
+                </View>
               ))}
               {healthScore.attentionItems.map((att, idx) => (
-                <Text key={idx} style={styles.attentionText}>{att}</Text>
+                <View key={`att-${idx}`} style={styles.bulletRow}>
+                  <Ionicons name="alert-circle" size={16} color={EthosColors.error} />
+                  <Text style={styles.attentionText}>{att}</Text>
+                </View>
               ))}
             </View>
           )}
@@ -210,11 +231,16 @@ export default function AssistantScreen() {
           {insights.map((ins) => (
             <View key={ins.id} style={styles.insightCard}>
               <View style={styles.insightHeader}>
-                <Ionicons
-                  name={ins.type === 'warning' ? 'warning-outline' : 'sparkles-outline'}
-                  size={20}
-                  color={ins.type === 'warning' ? EthosColors.error : EthosColors.primary}
-                />
+                <View style={[
+                  styles.insightIconBox,
+                  ins.type === 'warning' ? { backgroundColor: 'rgba(239,68,68,0.1)' } : { backgroundColor: 'rgba(99,102,241,0.1)' }
+                ]}>
+                  <Ionicons
+                    name={ins.type === 'warning' ? 'warning' : 'sparkles'}
+                    size={16}
+                    color={ins.type === 'warning' ? EthosColors.error : EthosColors.primary}
+                  />
+                </View>
                 <Text style={styles.insightTitle}>{ins.title}</Text>
               </View>
               <Text style={styles.insightBody}>{ins.message}</Text>
@@ -224,7 +250,7 @@ export default function AssistantScreen() {
           {/* ─── Smart Budget Suggestions Carousel ───────────────────────── */}
           {budgetSuggestions.length > 0 && (
             <View style={styles.sectionWrap}>
-              <Text style={styles.sectionTitle}>Smart Budget Suggestions</Text>
+              <Text style={styles.sectionTitle}>Smart Budget Recommendations</Text>
               {budgetSuggestions.map((sugg) => (
                 <View key={sugg.categoryId} style={styles.suggestionCard}>
                   <View style={styles.suggestionHeader}>
@@ -259,6 +285,16 @@ export default function AssistantScreen() {
           )}
 
           {/* ─── Chat Conversation Area ────────────────────────────────────── */}
+          {chatHistory.length === 0 && (
+            <View style={styles.emptyWelcomeCard}>
+              <Ionicons name="chatbubbles-outline" size={32} color={EthosColors.primary} />
+              <Text style={styles.welcomeTitle}>Ask Aether AI Anything</Text>
+              <Text style={styles.welcomeSubtext}>
+                Get instant insights about your expenses, budgets, savings rate, or salary allocation — 100% offline & private.
+              </Text>
+            </View>
+          )}
+
           {chatHistory.map((item, idx) => (
             <View key={idx} style={styles.chatMessageWrap}>
               {/* User Question */}
@@ -266,16 +302,18 @@ export default function AssistantScreen() {
                 <Text style={styles.userText}>{item.questionText}</Text>
               </View>
 
-              {/* Assistant Answer Card */}
+              {/* Aether AI Answer Card */}
               <View style={styles.assistantCard}>
                 <View style={styles.assistantTitleRow}>
-                  <Ionicons name="sparkles" size={16} color={EthosColors.primary} />
-                  <Text style={styles.assistantTitle}>Offline Intelligence</Text>
+                  <View style={styles.smallAvatar}>
+                    <Ionicons name="sparkles" size={12} color="#FFFFFF" />
+                  </View>
+                  <Text style={styles.assistantTitle}>Aether AI</Text>
                 </View>
 
                 <Text style={styles.answerText}>{item.answerText}</Text>
 
-                {item.metrics && (
+                {item.metrics && item.metrics.length > 0 && (
                   <View style={styles.metricsRow}>
                     {item.metrics.map((m, mIdx) => (
                       <View key={mIdx} style={styles.metricChip}>
@@ -291,7 +329,7 @@ export default function AssistantScreen() {
 
           {/* ─── Suggested Questions Chips ────────────────────────────────── */}
           <View style={styles.sectionWrap}>
-            <Text style={styles.sectionTitle}>Suggested Questions</Text>
+            <Text style={styles.sectionTitle}>Suggested Prompts</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
               {SUGGESTED_QUESTIONS.map((q, idx) => (
                 <Pressable
@@ -299,6 +337,7 @@ export default function AssistantScreen() {
                   onPress={() => handleAskQuestion(q)}
                   style={({ pressed }) => [styles.questionChip, pressed && styles.chipPressed]}
                 >
+                  <Ionicons name="sparkles-outline" size={14} color={EthosColors.primary} />
                   <Text style={styles.questionText}>{q}</Text>
                 </Pressable>
               ))}
@@ -311,7 +350,7 @@ export default function AssistantScreen() {
           <TextInput
             value={inputQuery}
             onChangeText={setInputQuery}
-            placeholder="Ask about your spending, savings, budgets..."
+            placeholder="Ask Aether AI about your spending..."
             placeholderTextColor={EthosColors.outline}
             style={styles.queryInput}
             onSubmitEditing={() => handleAskQuestion(inputQuery)}
@@ -326,9 +365,9 @@ export default function AssistantScreen() {
             ]}
           >
             {loading ? (
-              <ActivityIndicator size="small" color={EthosColors.onPrimary} />
+              <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
-              <Ionicons name="arrow-up" size={20} color={EthosColors.onPrimary} />
+              <Ionicons name="arrow-up" size={20} color="#FFFFFF" />
             )}
           </Pressable>
         </View>
@@ -347,18 +386,49 @@ const styles = StyleSheet.create({
     alignItems:        'center',
     justifyContent:    'space-between',
     paddingHorizontal: EthosSpacing.containerPadding,
-    paddingVertical:   EthosSpacing.stackMd,
+    paddingVertical:   10,
     backgroundColor:   EthosColors.surface,
     borderBottomWidth: EthosBorder.width,
     borderBottomColor: EthosBorder.color,
   },
   navBtn: {
-    padding: 4,
+    padding: 6,
+  },
+  headerCenter: {
+    flexDirection: 'row',
+    alignItems:    'center',
+    gap:           10,
+  },
+  avatarChip: {
+    width:           34,
+    height:          34,
+    borderRadius:    17,
+    backgroundColor: EthosColors.primary,
+    alignItems:      'center',
+    justifyContent:  'center',
   },
   headerTitle: {
     ...EthosTypography.headlineLg,
+    fontSize:   16,
     color:      EthosColors.onSurface,
-    fontWeight: '500',
+    fontWeight: '700',
+    lineHeight: 20,
+  },
+  onlineBadge: {
+    flexDirection: 'row',
+    alignItems:    'center',
+    gap:           4,
+  },
+  greenDot: {
+    width:           6,
+    height:          6,
+    borderRadius:    3,
+    backgroundColor: '#10B981',
+  },
+  badgeText: {
+    ...EthosTypography.labelSm,
+    fontSize: 11,
+    color:    EthosColors.outline,
   },
   scrollContent: {
     paddingHorizontal: EthosSpacing.containerPadding,
@@ -378,15 +448,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems:    'center',
     gap:           EthosSpacing.stackMd,
-    marginBottom:  EthosSpacing.stackSm,
   },
   healthScoreChip: {
     flexDirection:   'row',
     alignItems:      'baseline',
-    backgroundColor: EthosColors.surfaceContainerHigh,
+    backgroundColor: EthosColors.surfaceContainerLow,
     borderRadius:    EthosRadius.md,
     paddingHorizontal: 12,
     paddingVertical:   6,
+    borderWidth:     EthosBorder.width,
+    borderColor:     EthosBorder.color,
   },
   scoreNumber: {
     ...EthosTypography.headlineLg,
@@ -402,19 +473,34 @@ const styles = StyleSheet.create({
     ...EthosTypography.labelSm,
     color:         EthosColors.outline,
     letterSpacing: 1,
+    fontSize:      10,
   },
   healthRating: {
     ...EthosTypography.bodyLg,
     color:      EthosColors.primary,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  divider: {
+    height:          1,
+    backgroundColor: EthosBorder.color,
+    marginVertical:  4,
+  },
+  bulletRow: {
+    flexDirection: 'row',
+    alignItems:    'center',
+    gap:           8,
   },
   positiveText: {
     ...EthosTypography.bodyMd,
-    color: '#059669',
+    color:    '#059669',
+    fontSize: 13,
+    flex:     1,
   },
   attentionText: {
     ...EthosTypography.bodyMd,
-    color: EthosColors.error,
+    color:    EthosColors.error,
+    fontSize: 13,
+    flex:     1,
   },
   insightCard: {
     backgroundColor: EthosColors.surfaceContainerLowest,
@@ -422,21 +508,30 @@ const styles = StyleSheet.create({
     borderWidth:     EthosBorder.width,
     borderColor:     EthosBorder.color,
     padding:         EthosSpacing.containerPadding,
-    gap:             6,
+    gap:             8,
   },
   insightHeader: {
     flexDirection: 'row',
     alignItems:    'center',
-    gap:           8,
+    gap:           10,
+  },
+  insightIconBox: {
+    width:          28,
+    height:         28,
+    borderRadius:   14,
+    alignItems:     'center',
+    justifyContent: 'center',
   },
   insightTitle: {
     ...EthosTypography.bodyLg,
     fontWeight: '600',
     color:      EthosColors.primary,
+    fontSize:   14,
   },
   insightBody: {
     ...EthosTypography.bodyMd,
-    color: EthosColors.onSurfaceVariant,
+    color:    EthosColors.onSurfaceVariant,
+    fontSize: 13,
   },
   sectionWrap: {
     gap: EthosSpacing.stackSm,
@@ -446,6 +541,7 @@ const styles = StyleSheet.create({
     color:         EthosColors.outline,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
+    fontSize:      11,
   },
   suggestionCard: {
     backgroundColor: EthosColors.surfaceContainerLowest,
@@ -472,6 +568,7 @@ const styles = StyleSheet.create({
     ...EthosTypography.bodyLg,
     fontWeight: '600',
     color:      EthosColors.primary,
+    fontSize:   14,
   },
   suggReason: {
     ...EthosTypography.labelSm,
@@ -479,9 +576,9 @@ const styles = StyleSheet.create({
   },
   suggAmount: {
     ...EthosTypography.headlineLg,
-    fontSize:   18,
+    fontSize:   16,
     color:      EthosColors.primary,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   suggActions: {
     flexDirection:  'row',
@@ -506,7 +603,31 @@ const styles = StyleSheet.create({
   acceptText: {
     ...EthosTypography.labelMd,
     fontWeight: '600',
-    color:      EthosColors.onPrimary,
+    color:      '#FFFFFF',
+  },
+  emptyWelcomeCard: {
+    backgroundColor:   EthosColors.surfaceContainerLowest,
+    borderRadius:      EthosRadius.lg,
+    borderWidth:       EthosBorder.width,
+    borderColor:       EthosBorder.color,
+    padding:           EthosSpacing.containerPadding + 4,
+    alignItems:        'center',
+    justifyContent:    'center',
+    gap:               8,
+    marginVertical:    12,
+  },
+  welcomeTitle: {
+    ...EthosTypography.headlineLg,
+    fontSize:   16,
+    fontWeight: '600',
+    color:      EthosColors.primary,
+  },
+  welcomeSubtext: {
+    ...EthosTypography.bodyMd,
+    fontSize:   13,
+    color:      EthosColors.outline,
+    textAlign:  'center',
+    lineHeight: 18,
   },
   chatMessageWrap: {
     gap: EthosSpacing.stackSm,
@@ -515,18 +636,21 @@ const styles = StyleSheet.create({
     alignSelf:         'flex-end',
     backgroundColor:   EthosColors.primary,
     borderRadius:      EthosRadius.lg,
+    borderBottomRightRadius: 4,
     paddingHorizontal: EthosSpacing.containerPadding,
-    paddingVertical:   EthosSpacing.stackSm + 2,
+    paddingVertical:   10,
     maxWidth:          '85%',
   },
   userText: {
     ...EthosTypography.bodyMd,
-    color: EthosColors.onPrimary,
+    color:    '#FFFFFF',
+    fontSize: 14,
   },
   assistantCard: {
     alignSelf:       'flex-start',
     backgroundColor: EthosColors.surfaceContainerLowest,
     borderRadius:    EthosRadius.lg,
+    borderTopLeftRadius: 4,
     borderWidth:     EthosBorder.width,
     borderColor:     EthosBorder.color,
     padding:         EthosSpacing.containerPadding,
@@ -538,14 +662,25 @@ const styles = StyleSheet.create({
     alignItems:    'center',
     gap:           6,
   },
+  smallAvatar: {
+    width:           18,
+    height:          18,
+    borderRadius:    9,
+    backgroundColor: EthosColors.primary,
+    alignItems:      'center',
+    justifyContent:  'center',
+  },
   assistantTitle: {
     ...EthosTypography.labelSm,
     color:      EthosColors.primary,
-    fontWeight: '600',
+    fontWeight: '700',
+    fontSize:   12,
   },
   answerText: {
     ...EthosTypography.bodyMd,
-    color: EthosColors.onSurface,
+    color:    EthosColors.onSurface,
+    fontSize: 14,
+    lineHeight: 20,
   },
   metricsRow: {
     flexDirection: 'row',
@@ -558,6 +693,8 @@ const styles = StyleSheet.create({
     borderRadius:    EthosRadius.md,
     paddingHorizontal: 10,
     paddingVertical:   6,
+    borderWidth:     EthosBorder.width,
+    borderColor:     EthosBorder.color,
   },
   metricLabel: {
     ...EthosTypography.labelSm,
@@ -568,8 +705,12 @@ const styles = StyleSheet.create({
     ...EthosTypography.bodyMd,
     fontWeight: '600',
     color:      EthosColors.primary,
+    fontSize:   13,
   },
   questionChip: {
+    flexDirection:   'row',
+    alignItems:      'center',
+    gap:             6,
     backgroundColor: EthosColors.surfaceContainerLowest,
     borderWidth:     EthosBorder.width,
     borderColor:     EthosBorder.color,
@@ -582,14 +723,15 @@ const styles = StyleSheet.create({
   },
   questionText: {
     ...EthosTypography.labelMd,
-    color: EthosColors.primary,
+    color:    EthosColors.primary,
+    fontSize: 13,
   },
   inputToolbar: {
     flexDirection:     'row',
     alignItems:        'center',
     gap:               EthosSpacing.stackSm,
     paddingHorizontal: EthosSpacing.containerPadding,
-    paddingVertical:   EthosSpacing.stackSm + 2,
+    paddingVertical:   10,
     backgroundColor:   EthosColors.surface,
     borderTopWidth:    EthosBorder.width,
     borderTopColor:    EthosBorder.color,
@@ -599,9 +741,12 @@ const styles = StyleSheet.create({
     backgroundColor:   EthosColors.surfaceContainerLow,
     borderRadius:      EthosRadius.full,
     paddingHorizontal: EthosSpacing.containerPadding,
-    paddingVertical:   EthosSpacing.stackSm + 2,
+    paddingVertical:   10,
     ...EthosTypography.bodyMd,
+    fontSize:          14,
     color:             EthosColors.onSurface,
+    borderWidth:       EthosBorder.width,
+    borderColor:       EthosBorder.color,
   },
   sendBtn: {
     width:           40,
@@ -612,3 +757,4 @@ const styles = StyleSheet.create({
     justifyContent:  'center',
   },
 });
+

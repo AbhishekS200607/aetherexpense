@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSettingsStore } from '@/store/settingsStore';
+import { manualUpdateCheck } from '@/utils/updates';
 import {
   EthosColors,
   EthosTypography,
@@ -169,6 +170,18 @@ export default function SettingsScreen() {
             iconColor="#64748B"
             label="Data Management"
             onPress={() => router.push('/settings/data')}
+            isLast
+          />
+        </Section>
+
+        {/* App Info & Updates */}
+        <Section title="About & Updates">
+          <SettingRow
+            id="settings-check-updates"
+            icon="cloud-download-outline"
+            iconColor="#0284C7"
+            label="Check for Updates"
+            onPress={manualUpdateCheck}
             isLast
           />
         </Section>
