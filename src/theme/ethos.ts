@@ -217,3 +217,20 @@ export const EthosBorder = {
   color:  '#E5E5E5',   // 1px hairline cards
   width:  1,
 } as const;
+
+// ─── Animation Timing Tokens ───────────────────────────────────────────────
+/**
+ * Strict animation timings for financial trustworthiness & fast response:
+ * - Micro (100–150ms): button press, switch, checkbox
+ * - Transition (180–250ms): list item entrance, tab switch
+ * - Modal (250–350ms): bottom sheet, modal overlay
+ * - Chart (400–700ms): chart entrance progressive fill
+ * - Success (300–500ms): checkmark, save confirmation
+ */
+export const EthosAnimation = {
+  micro:      120,
+  transition: 200,
+  modal:      300,
+  chart:      500,
+  success:    400,
+} as const;
