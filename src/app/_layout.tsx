@@ -169,9 +169,10 @@ export default function RootLayout() {
   const dataVersion = useAppStore((s) => s.dataVersion);
   const isLocked = useAppStore((s) => s.isLocked);
   const setIsLocked = useAppStore((s) => s.setIsLocked);
+  const lockType = useAppStore((s) => s.lockType);
+  const setLockType = useAppStore((s) => s.setLockType);
   const themeMode = useSettingsStore((s) => s.theme);
 
-  const [lockType, setLockTypeState] = useState<LockType>('off');
   const [securityChecked, setSecurityChecked] = useState(false);
   const [showPrivacyShield, setShowPrivacyShield] = useState(false);
   const backgroundTimestamp = useRef<number | null>(null);
@@ -182,7 +183,7 @@ export default function RootLayout() {
       if (!dbReady) return;
       try {
         const lType = await getLockType();
-        setLockTypeState(lType);
+        setLockType(lType);
         if (lType === 'off') {
           setIsLocked(false);
         } else if (!securityChecked) {
@@ -196,7 +197,7 @@ export default function RootLayout() {
       }
     }
     syncSecurityLock();
-  }, [dbReady, dataVersion, isLocked, setIsLocked, securityChecked]);
+  }, [dbReady, dataVersion, isLocked, setIsLocked, setLockType, securityChecked]);
 
   // AppState Listener for Background Auto-Lock Timer & App Switcher Privacy Shield
   useEffect(() => {
@@ -208,7 +209,7 @@ export default function RootLayout() {
         setShowPrivacyShield(true);
 
         const lType = await getLockType();
-        setLockTypeState(lType);
+        setLockType(lType);
         if (lType === 'off') return;
 
         const delay = await getAutoLockDelay();
@@ -222,7 +223,7 @@ export default function RootLayout() {
       } else if (nextState === 'active') {
         console.log('[APPSTATE] active');
         const lType = await getLockType();
-        setLockTypeState(lType);
+        setLockType(lType);
         if (lType !== 'off') {
           const delay = await getAutoLockDelay();
           if (backgroundTimestamp.current) {
@@ -239,7 +240,7 @@ export default function RootLayout() {
       }
     });
     return () => sub.remove();
-  }, [setIsLocked]);
+  }, [setIsLocked, setLockType]);
 
   const effectiveScheme =
     themeMode === 'system' ? colorScheme : themeMode;
@@ -296,11 +297,16 @@ export default function RootLayout() {
               translucent={false}
             />
 
-            <LockScreen
-              visible={isLocked}
-              lockType={lockType}
-              onUnlock={() => setIsLocked(false)}
-            />
+            {/* Security Barrier Layer: Lock Screen Overlay */}
+            {isLocked && lockType !== 'off' && (
+              <View style={[StyleSheet.absoluteFill, { zIndex: 99999, elevation: 99999 }]}>
+                <LockScreen
+                  visible={isLocked}
+                  lockType={lockType}
+                  onUnlock={() => setIsLocked(false)}
+                />
+              </View>
+            )}
 
             {/* Privacy Shield Layer: Instantly covers app in App Switcher / Background */}
             {showPrivacyShield && (

@@ -6,6 +6,7 @@
  */
 
 import { create } from 'zustand';
+import type { LockType } from '@/utils/security';
 
 interface AppState {
   /** True once the SQLite database is initialized and seeded */
@@ -18,6 +19,8 @@ interface AppState {
   dataVersion:       number;
   /** True when App Lock screen overlay is active */
   isLocked:          boolean;
+  /** Reactive Lock Type ('off' | 'pin' | 'biometric') */
+  lockType:          LockType;
 
   setDbReady:        (ready: boolean) => void;
   setLoading:        (loading: boolean) => void;
@@ -27,6 +30,8 @@ interface AppState {
   invalidateData:    () => void;
   /** Lock or unlock the app UI overlay */
   setIsLocked:       (locked: boolean) => void;
+  /** Set reactive lock type */
+  setLockType:       (type: LockType) => void;
 }
 
 export const useAppStore = create<AppState>()((set) => ({
@@ -35,6 +40,7 @@ export const useAppStore = create<AppState>()((set) => ({
   globalError:    null,
   dataVersion:    0,
   isLocked:       false,
+  lockType:       'off',
 
   setDbReady:     (ready) => set({ dbReady: ready }),
   setLoading:     (loading) => set({ isLoading: loading }),
@@ -42,4 +48,5 @@ export const useAppStore = create<AppState>()((set) => ({
   clearError:     () => set({ globalError: null }),
   invalidateData: () => set((s) => ({ dataVersion: s.dataVersion + 1 })),
   setIsLocked:    (locked) => set({ isLocked: locked }),
+  setLockType:    (type) => set({ lockType: type }),
 }));

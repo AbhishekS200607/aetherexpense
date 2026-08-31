@@ -48,6 +48,8 @@ import {
 export default function SecuritySettingsScreen() {
   const invalidateData = useAppStore((s) => s.invalidateData);
   const setIsLocked = useAppStore((s) => s.setIsLocked);
+  const setGlobalLockType = useAppStore((s) => s.setLockType);
+
   const [lockType, setLockTypeState] = useState<LockType>('off');
   const [autoLockDelay, setAutoLockDelayState] = useState(0);
   const [privacyMode, setPrivacyModeState] = useState(false);
@@ -72,12 +74,13 @@ export default function SecuritySettingsScreen() {
       const bio = await checkBiometricSupport();
 
       setLockTypeState(lType);
+      setGlobalLockType(lType);
       setAutoLockDelayState(delay);
       setPrivacyModeState(pMode);
       setBiometricInfo(bio);
     }
     loadSettings();
-  }, []);
+  }, [setGlobalLockType]);
 
   // Handle Lock Type Change
   const handleSelectLockType = async (targetType: LockType) => {
@@ -93,6 +96,7 @@ export default function SecuritySettingsScreen() {
       } else {
         await setLockType('off');
         setLockTypeState('off');
+        setGlobalLockType('off');
         invalidateData();
       }
     } else if (targetType === 'pin') {
@@ -105,6 +109,7 @@ export default function SecuritySettingsScreen() {
       } else {
         await setLockType('pin');
         setLockTypeState('pin');
+        setGlobalLockType('pin');
         invalidateData();
       }
     } else if (targetType === 'biometric') {
@@ -125,6 +130,7 @@ export default function SecuritySettingsScreen() {
       } else {
         await setLockType('biometric');
         setLockTypeState('biometric');
+        setGlobalLockType('biometric');
         invalidateData();
       }
     }
@@ -159,6 +165,7 @@ export default function SecuritySettingsScreen() {
       const targetType = pinMode === 'enable_bio' ? 'biometric' : 'pin';
       await setLockType(targetType);
       setLockTypeState(targetType);
+      setGlobalLockType(targetType);
       setShowPinModal(false);
       invalidateData();
       // Immediately lock the app automatically after setting PIN
@@ -190,9 +197,20 @@ export default function SecuritySettingsScreen() {
       await setLockType('off');
       await clearPinHash();
       setLockTypeState('off');
+      setGlobalLockType('off');
       setShowPinModal(false);
       invalidateData();
       Alert.alert('App Lock Disabled', 'App lock has been turned off.');
+    }
+  };
+
+  const handleLockNow = async () => {
+    const currentLockType = await getLockType();
+    if (currentLockType !== 'off') {
+      setGlobalLockType(currentLockType);
+      setIsLocked(true);
+    } else {
+      Alert.alert('App Lock Disabled', 'Please enable PIN or Biometrics first.');
     }
   };
 
@@ -212,7 +230,7 @@ export default function SecuritySettingsScreen() {
         {lockType !== 'off' && (
           <View style={{ marginBottom: EthosSpacing.stackLg }}>
             <Pressable
-              onPress={() => setIsLocked(true)}
+              onPress={handleLockNow}
               style={({ pressed }) => [
                 styles.lockNowBtn,
                 pressed && { opacity: 0.8 },
