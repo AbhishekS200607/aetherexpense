@@ -36,7 +36,7 @@ import { processRecurringTransactions } from '@/utils/recurring';
 import { useAppStore } from '@/store/appStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { DarkColors, LightColors } from '@/theme';
-import { EthosColors } from '@/theme/ethos';
+import { AnimatedToast } from '@/components/ui/AnimatedToast';
 import { settings } from '@/database/schema';
 import migrations from '@/database/migrations/migrations';
 import type { AppSettings } from '@/types/settings';
@@ -296,6 +296,9 @@ export default function RootLayout() {
               backgroundColor={colors.background}
               translucent={false}
             />
+
+            {/* Global Animated In-App Toast Notifications Layer */}
+            <AnimatedToast />
 
             {/* Security Barrier Layer: Lock Screen Overlay */}
             {isLocked && lockType !== 'off' && (

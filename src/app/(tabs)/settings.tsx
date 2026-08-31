@@ -154,6 +154,13 @@ export default function SettingsScreen() {
             iconColor="#6366F1"
             label="Manage Recurring Rules"
             onPress={() => router.push('/recurring' as any)}
+          />
+          <SettingRow
+            id="settings-notifications"
+            icon="notifications-outline"
+            iconColor="#8B5CF6"
+            label="Notifications & Alerts"
+            onPress={() => router.push('/settings/notifications' as any)}
             isLast
           />
         </Section>
