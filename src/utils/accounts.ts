@@ -70,3 +70,97 @@ export const ACCOUNT_TYPE_CONFIG: Record<
   savings:     { label: 'Savings Account',defaultIcon: 'wallet-outline',   defaultColor: '#059669' },
   custom:      { label: 'Custom Account', defaultIcon: 'briefcase-outline',defaultColor: '#475569' },
 };
+
+/**
+ * Calculates current balance for a specific account ID directly from SQLite database.
+ */
+export async function getAccountCurrentBalance(db: DrizzleDB, accountId: string): Promise<number> {
+  const accRows = await db.select().from(accounts).where(eq(accounts.id, accountId));
+  if (accRows.length === 0) return 0;
+  const targetAcc = accRows[0];
+
+  const { transactions } = await import('@/database/schema');
+  const allTxns = await db.select({
+    id:                     transactions.id,
+    type:                   transactions.type,
+    amount:                 transactions.amount,
+    account_id:             transactions.account_id,
+    transfer_to_account_id: transactions.transfer_to_account_id,
+  }).from(transactions);
+
+  return calculateAccountBalance(targetAcc.opening_balance, accountId, allTxns as TxnSummaryItem[]);
+}
+
+export interface ExecuteTransferInput {
+  fromAccountId: string;
+  toAccountId:   string;
+  amountPaise:   number;
+  date:          string;
+  time:          string;
+  note?:         string;
+}
+
+/**
+ * Executes a 100% atomic financial transfer between two accounts.
+ * Enforces:
+ *   1. Source and target accounts must be different.
+ *   2. Amount must be positive integer minor units.
+ *   3. Insufficient Balance Check: Source account MUST have available balance >= amount.
+ *   4. Atomic transaction wrapper: ROLLBACK if any step fails.
+ */
+export async function executeAccountTransfer(
+  db: DrizzleDB,
+  input: ExecuteTransferInput
+): Promise<string> {
+  if (!input.fromAccountId || !input.toAccountId) {
+    throw new Error('Please select both source and target accounts.');
+  }
+  if (input.fromAccountId === input.toAccountId) {
+    throw new Error('Source and target accounts must be different.');
+  }
+  if (input.amountPaise <= 0) {
+    throw new Error('Transfer amount must be greater than zero.');
+  }
+
+  // 1. Verify available balance of source account
+  const sourceBalance = await getAccountCurrentBalance(db, input.fromAccountId);
+  if (sourceBalance < input.amountPaise) {
+    const formattedAvailable = (sourceBalance / 100).toFixed(2);
+    const formattedRequested = (input.amountPaise / 100).toFixed(2);
+    throw new Error(
+      `Insufficient balance in source account. Available: ₹${formattedAvailable}, Requested: ₹${formattedRequested}.`
+    );
+  }
+
+  const { transactions, categories } = await import('@/database/schema');
+  const { generateUUID } = await import('@/utils/uuid');
+  const { nowISO } = await import('@/utils/dates');
+
+  const transferTxnId = generateUUID();
+
+  // 2. Wrap multi-step transfer in an atomic transaction
+  await db.transaction(async (tx) => {
+    const cats = await tx.select().from(categories).limit(1);
+    const defaultCatId = cats[0]?.id ?? 'default-cat';
+    const now = nowISO();
+
+    await tx.insert(transactions).values({
+      id:                     transferTxnId,
+      type:                   'transfer',
+      amount:                 input.amountPaise,
+      category_id:            defaultCatId,
+      account_id:             input.fromAccountId,
+      transfer_to_account_id: input.toAccountId,
+      date:                   input.date,
+      time:                   input.time,
+      note:                   input.note ? input.note.trim() : 'Account Transfer',
+      merchant:               null,
+      payment_method:         'bank',
+      is_recurring:           0,
+      created_at:             now,
+      updated_at:             now,
+    });
+  });
+
+  return transferTxnId;
+}

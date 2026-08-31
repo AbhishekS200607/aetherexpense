@@ -36,6 +36,7 @@ import {
   EthosBorder,
 } from '@/theme/ethos';
 import { toMinorUnits, getCurrencySymbol } from '@/utils/currency';
+import { executeAccountTransfer } from '@/utils/accounts';
 import { todayISO, currentTimeHHMM, nowISO } from '@/utils/dates';
 import type { AccountRow } from '@/database/schema';
 
@@ -91,37 +92,21 @@ export default function TransferScreen() {
 
     setSaving(true);
     try {
-      await sqliteDb.withTransactionAsync(async () => {
-        const db = createDrizzleDB(sqliteDb);
-
-        // Find or fallback a category for transfer
-        const cats = await db.select().from(categories).limit(1);
-        const defaultCatId = cats[0]?.id ?? 'default-cat';
-
-        const now = nowISO();
-        await db.insert(transactions).values({
-          id:                     uuidv4(),
-          type:                   'transfer',
-          amount:                 toMinorUnits(amount),
-          category_id:            defaultCatId,
-          account_id:             fromAccountId,
-          transfer_to_account_id: toAccountId,
-          date,
-          time,
-          note:                   note.trim() || 'Account Transfer',
-          merchant:               null,
-          payment_method:         'bank',
-          is_recurring:           0,
-          created_at:             now,
-          updated_at:             now,
-        });
+      const db = createDrizzleDB(sqliteDb);
+      await executeAccountTransfer(db, {
+        fromAccountId,
+        toAccountId,
+        amountPaise: toMinorUnits(amount),
+        date,
+        time,
+        note: note.trim() || 'Account Transfer',
       });
 
       invalidateData();
       router.back();
     } catch (err) {
       console.error('[TransferScreen] Save error:', err);
-      Alert.alert('Error', 'Could not complete transfer.');
+      Alert.alert('Transfer Failed', err instanceof Error ? err.message : 'Could not complete transfer.');
     } finally {
       setSaving(false);
     }
