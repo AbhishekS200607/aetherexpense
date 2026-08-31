@@ -14,31 +14,39 @@ const LOCK_TYPE_KEY = 'aetherexpense_lock_type'; // 'off' | 'pin' | 'biometric'
 const AUTO_LOCK_DELAY_KEY = 'aetherexpense_auto_lock_delay'; // 0 | 60 | 300 | 900
 const PRIVACY_MODE_KEY = 'aetherexpense_privacy_mode'; // 'true' | 'false'
 
-/** Helper for resilient key retrieval */
+const memoryCache = new Map<string, string>();
+
+/** Helper for resilient key retrieval with memory cache fallback */
 async function getItem(key: string): Promise<string | null> {
   try {
-    return await SecureStore.getItemAsync(key);
+    const val = await SecureStore.getItemAsync(key);
+    if (val !== null && val !== undefined) {
+      memoryCache.set(key, val);
+      return val;
+    }
   } catch (e) {
-    console.warn(`[Security] Error getting item for ${key}:`, e);
-    return null;
+    console.warn(`[Security] SecureStore get error for ${key}:`, e);
   }
+  return memoryCache.get(key) ?? null;
 }
 
-/** Helper for resilient key storage */
+/** Helper for resilient key storage with memory cache fallback */
 async function setItem(key: string, value: string): Promise<void> {
+  memoryCache.set(key, value);
   try {
     await SecureStore.setItemAsync(key, value);
   } catch (e) {
-    console.warn(`[Security] Error setting item for ${key}:`, e);
+    console.warn(`[Security] SecureStore set error for ${key}:`, e);
   }
 }
 
 /** Helper for resilient key deletion */
 async function removeItem(key: string): Promise<void> {
+  memoryCache.delete(key);
   try {
     await SecureStore.deleteItemAsync(key);
   } catch (e) {
-    console.warn(`[Security] Error deleting item for ${key}:`, e);
+    console.warn(`[Security] SecureStore delete error for ${key}:`, e);
   }
 }
 
@@ -87,12 +95,11 @@ export type LockType = 'off' | 'pin' | 'biometric';
 export async function getLockType(): Promise<LockType> {
   try {
     const val = await getItem(LOCK_TYPE_KEY);
+    if (val === 'pin' || val === 'biometric') return val;
     if (val === 'off') return 'off';
+
     const hasPin = await hasPinConfigured();
-    if (hasPin) {
-      if (val === 'biometric') return 'biometric';
-      return 'pin';
-    }
+    if (hasPin) return 'pin';
     return 'off';
   } catch (err) {
     console.warn('[Security] Error getting lock type:', err);

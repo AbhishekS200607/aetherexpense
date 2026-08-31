@@ -177,7 +177,7 @@ export default function RootLayout() {
   const [showPrivacyShield, setShowPrivacyShield] = useState(false);
   const backgroundTimestamp = useRef<number | null>(null);
 
-  // Security Lock State Synchronization (runs on Launch, Data Invalidation, & Lock Toggle)
+  // Security Lock State Synchronization (runs ONLY once DB is ready, eliminating race conditions)
   useEffect(() => {
     async function syncSecurityLock() {
       if (!dbReady) return;
@@ -186,8 +186,8 @@ export default function RootLayout() {
         setLockType(lType);
         if (lType === 'off') {
           setIsLocked(false);
-        } else if (!securityChecked) {
-          // Force lock screen on cold application launch
+        } else {
+          // Force lock screen on application launch when PIN or Biometrics is enabled
           setIsLocked(true);
         }
       } catch (err) {
@@ -197,7 +197,7 @@ export default function RootLayout() {
       }
     }
     syncSecurityLock();
-  }, [dbReady, dataVersion, isLocked, setIsLocked, setLockType, securityChecked]);
+  }, [dbReady]);
 
   // AppState Listener for Background Auto-Lock Timer & App Switcher Privacy Shield
   useEffect(() => {
@@ -226,7 +226,9 @@ export default function RootLayout() {
         setLockType(lType);
         if (lType !== 'off') {
           const delay = await getAutoLockDelay();
-          if (backgroundTimestamp.current) {
+          if (delay === 0) {
+            setIsLocked(true);
+          } else if (backgroundTimestamp.current) {
             const elapsedSec = (Date.now() - backgroundTimestamp.current) / 1000;
             if (elapsedSec >= delay) {
               console.log(`[APPLOCK] locking (Elapsed: ${elapsedSec}s >= Delay: ${delay}s)`);
