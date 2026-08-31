@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSQLiteContext } from 'expo-sqlite';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import {
   EthosColors,
@@ -144,7 +145,7 @@ export default function DebtsDashboardScreen() {
       >
         {/* ─── Summary Cards Bento ──────────────────────────────────────── */}
         {summary && (
-          <View style={styles.summaryWrap}>
+          <Animated.View entering={FadeInDown.duration(350)} style={styles.summaryWrap}>
             {/* Top Main Cards: Owed to Me vs I Owe */}
             <View style={styles.summaryRow}>
               {/* Owed to Me (Lent) */}
@@ -199,7 +200,7 @@ export default function DebtsDashboardScreen() {
                 </View>
               )}
             </View>
-          </View>
+          </Animated.View>
         )}
 
         {/* ─── Segmented Filter Tabs ───────────────────────────────────── */}
