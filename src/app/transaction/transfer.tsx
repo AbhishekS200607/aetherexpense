@@ -28,6 +28,7 @@ import { createDrizzleDB } from '@/database/client';
 import { accounts, transactions, categories } from '@/database/schema';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useAppStore } from '@/store/appStore';
+import { useToastStore } from '@/store/toastStore';
 import {
   EthosColors,
   EthosTypography,
@@ -77,16 +78,28 @@ export default function TransferScreen() {
 
   const handleCompleteTransfer = async () => {
     if (!fromAccountId || !toAccountId) {
-      Alert.alert('Required', 'Please select both source and target accounts.');
+      useToastStore.getState().showToast({
+        type: 'warning',
+        title: 'Account Required',
+        message: 'Please select both source and target accounts.',
+      });
       return;
     }
     if (fromAccountId === toAccountId) {
-      Alert.alert('Invalid Transfer', 'Source and target accounts must be different.');
+      useToastStore.getState().showToast({
+        type: 'warning',
+        title: 'Invalid Transfer',
+        message: 'Source and target accounts must be different.',
+      });
       return;
     }
     const numericAmt = parseFloat(amount);
     if (isNaN(numericAmt) || numericAmt <= 0) {
-      Alert.alert('Invalid Amount', 'Please enter an amount greater than 0.');
+      useToastStore.getState().showToast({
+        type: 'warning',
+        title: 'Invalid Amount',
+        message: 'Please enter an amount greater than 0.',
+      });
       return;
     }
 
@@ -103,10 +116,19 @@ export default function TransferScreen() {
       });
 
       invalidateData();
+      useToastStore.getState().showToast({
+        type: 'success',
+        title: 'Transfer Complete 🎉',
+        message: `Transferred ${getCurrencySymbol(currencyCode)}${parseFloat(amount).toFixed(2)} between accounts.`,
+      });
       router.back();
     } catch (err) {
       console.error('[TransferScreen] Save error:', err);
-      Alert.alert('Transfer Failed', err instanceof Error ? err.message : 'Could not complete transfer.');
+      useToastStore.getState().showToast({
+        type: 'error',
+        title: 'Transfer Failed',
+        message: err instanceof Error ? err.message : 'Could not complete transfer.',
+      });
     } finally {
       setSaving(false);
     }

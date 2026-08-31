@@ -203,38 +203,37 @@ export function UpdateCheckerModal({ visible, onClose }: UpdateCheckerModalProps
                 <Ionicons name="checkmark-circle" size={44} color="#059669" />
               </View>
 
-              <Text style={styles.resultTitle}>App is Up to Date</Text>
+              <Text style={styles.resultTitle}>You're on the Latest Release</Text>
               <Text style={styles.resultSubtext}>
-                You are running the latest version of AetherExpense (v1.0.0). All financial ledgers and offline engines are operating cleanly.
+                AetherExpense v1.0.0 (Build 3) — All financial ledgers, offline AI engines, and security modules are active.
               </Text>
 
-              {/* Build Diagnostics Box */}
+              {/* Current Version Highlights Box */}
               <View style={styles.changelogBox}>
-                <Text style={styles.changelogTitle}>Build Diagnostics:</Text>
-                <Text style={styles.changelogItem}>• Channel: {Updates.channel || 'preview'}</Text>
-                <Text style={styles.changelogItem}>• Runtime: {Updates.runtimeVersion || '1.0.0'}</Text>
-                <Text style={styles.changelogItem}>
-                  • Active Bundle: {Updates.updateId ? `${Updates.updateId.slice(0, 8)}...` : 'Initial Embedded Build'}
-                </Text>
+                <Text style={styles.changelogTitle}>Installed Version Highlights:</Text>
+                <Text style={styles.changelogItem}>• 🛡️ P0 Financial Integrity & Atomic Transfers</Text>
+                <Text style={styles.changelogItem}>• 🔔 Animated Top Banner Alerts & Reminders</Text>
+                <Text style={styles.changelogItem}>• 🔒 Hardened SecureStore Biometric App Lock</Text>
+                <Text style={styles.changelogItem}>• ⚡ 100% Offline AI Intelligence & Receipt OCR</Text>
               </View>
+
+              <Pressable onPress={onClose} style={styles.primaryBtn}>
+                <Text style={styles.primaryBtnText}>Done</Text>
+              </Pressable>
 
               <Pressable
                 onPress={handleDownloadAndReload}
                 disabled={downloading}
-                style={[styles.primaryBtn, { backgroundColor: EthosColors.surfaceContainerHigh, borderWidth: 1, borderColor: EthosBorder.color }]}
+                style={styles.secondaryBtn}
               >
                 {downloading ? (
                   <ActivityIndicator size="small" color={EthosColors.primary} />
                 ) : (
                   <>
-                    <Ionicons name="refresh-outline" size={16} color={EthosColors.onSurface} />
-                    <Text style={[styles.primaryBtnText, { color: EthosColors.onSurface }]}>Force Fetch & Reload</Text>
+                    <Ionicons name="refresh-outline" size={15} color={EthosColors.outline} />
+                    <Text style={styles.secondaryBtnText}>Check for New Patch</Text>
                   </>
                 )}
-              </Pressable>
-
-              <Pressable onPress={onClose} style={styles.primaryBtn}>
-                <Text style={styles.primaryBtnText}>Done</Text>
               </Pressable>
             </Animated.View>
           )}
@@ -454,5 +453,19 @@ const styles = StyleSheet.create({
     ...EthosTypography.labelMd,
     color: EthosColors.onPrimary,
     fontWeight: '600',
+  },
+  secondaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginTop: 4,
+  },
+  secondaryBtnText: {
+    ...EthosTypography.bodyMd,
+    fontSize: 12,
+    color: EthosColors.outline,
   },
 });

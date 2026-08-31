@@ -35,6 +35,7 @@ import { createDrizzleDB } from '@/database/client';
 import { transactions, categories, accounts } from '@/database/schema';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useAppStore } from '@/store/appStore';
+import { useToastStore } from '@/store/toastStore';
 import {
   EthosColors,
   EthosTypography,
@@ -115,7 +116,11 @@ export default function AddTransactionScreen() {
 
   const onSubmit = async (data: TransactionFormSchema) => {
     if (!data.category_id) {
-      Alert.alert('Category Required', 'Please select a category.');
+      useToastStore.getState().showToast({
+        type: 'warning',
+        title: 'Category Required',
+        message: 'Please select a category for this transaction.',
+      });
       return;
     }
 
@@ -143,7 +148,11 @@ export default function AddTransactionScreen() {
       setShowSuccess(true);
     } catch (err) {
       console.error('[AddTransactionScreen] Error saving:', err);
-      Alert.alert('Error', 'Could not save transaction. Please try again.');
+      useToastStore.getState().showToast({
+        type: 'error',
+        title: 'Transaction Failed',
+        message: 'Could not save transaction. Please try again.',
+      });
     } finally {
       setSaving(false);
     }
