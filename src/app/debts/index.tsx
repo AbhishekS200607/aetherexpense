@@ -13,6 +13,7 @@ import {
   Pressable,
   StyleSheet,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
@@ -31,7 +32,7 @@ import { useAppStore } from '@/store/appStore';
 import { createDrizzleDB } from '@/database/client';
 import { formatCurrency } from '@/utils/currency';
 import { todayISO } from '@/utils/dates';
-import { getDebtsList, getDebtsSummary } from '@/utils/debts';
+import { getDebtsList, getDebtsSummary, deleteDebt, settleDebtInFull } from '@/utils/debts';
 import type { Debt, DebtsSummary } from '@/types/debts';
 
 type FilterTab = 'ALL' | 'LENT' | 'BORROWED' | 'SETTLED';
@@ -65,6 +66,55 @@ export default function DebtsDashboardScreen() {
     }
     loadData();
   }, [sqliteDb, dataVersion, activeTab]);
+
+  const invalidateData = useAppStore((s) => s.invalidateData);
+
+  const handleQuickDelete = (item: Debt) => {
+    Alert.alert(
+      'Delete Record',
+      `Are you sure you want to delete "${item.title}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            if (!sqliteDb) return;
+            try {
+              const db = createDrizzleDB(sqliteDb);
+              await deleteDebt(db, item.id);
+              invalidateData();
+            } catch (err) {
+              console.error('[Debts] Delete error:', err);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleQuickSettle = (item: Debt) => {
+    Alert.alert(
+      'Mark as Paid in Full',
+      `Mark "${item.title}" as fully settled (${formatCurrency(item.remainingAmount, currencyCode)})?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Mark Paid',
+          onPress: async () => {
+            if (!sqliteDb) return;
+            try {
+              const db = createDrizzleDB(sqliteDb);
+              await settleDebtInFull(db, item.id, item.accountId, false);
+              invalidateData();
+            } catch (err) {
+              console.error('[Debts] Settle error:', err);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const today = todayISO();
 
@@ -210,7 +260,7 @@ export default function DebtsDashboardScreen() {
               return (
                 <Pressable
                   key={item.id}
-                  onPress={() => router.push(`/debts/${item.id}` as any)}
+                  onPress={() => router.push({ pathname: '/debts/[id]', params: { id: item.id } } as any)}
                   style={({ pressed }) => [
                     styles.bentoCard,
                     pressed && styles.bentoCardPressed,
@@ -271,12 +321,61 @@ export default function DebtsDashboardScreen() {
                     <Text style={styles.progressPctText}>{progressPct}% Paid</Text>
                   </View>
 
-                  {/* Footer: Due Date & Arrow */}
+                  {/* Footer: Action Buttons */}
                   <View style={styles.cardFooter}>
                     <Text style={styles.dueDateText}>
                       {item.dueDate ? `Due: ${item.dueDate}` : 'No Due Date'}
                     </Text>
-                    <Ionicons name="chevron-forward" size={16} color={EthosColors.outline} />
+
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      {!isSettled && (
+                        <Pressable
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            handleQuickSettle(item);
+                          }}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 4,
+                            backgroundColor: '#10B98115',
+                            paddingHorizontal: 8,
+                            paddingVertical: 4,
+                            borderRadius: EthosRadius.sm,
+                          }}
+                          hitSlop={6}
+                        >
+                          <Ionicons name="checkmark-circle-outline" size={14} color="#059669" />
+                          <Text style={{ ...EthosTypography.labelSm, color: '#059669', fontSize: 11, fontWeight: '600' }}>
+                            Mark Paid
+                          </Text>
+                        </Pressable>
+                      )}
+
+                      <Pressable
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          handleQuickDelete(item);
+                        }}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 4,
+                          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                          paddingHorizontal: 8,
+                          paddingVertical: 4,
+                          borderRadius: EthosRadius.sm,
+                        }}
+                        hitSlop={6}
+                      >
+                        <Ionicons name="trash-outline" size={14} color={EthosColors.error} />
+                        <Text style={{ ...EthosTypography.labelSm, color: EthosColors.error, fontSize: 11, fontWeight: '600' }}>
+                          Delete
+                        </Text>
+                      </Pressable>
+
+                      <Ionicons name="chevron-forward" size={16} color={EthosColors.outline} />
+                    </View>
                   </View>
                 </Pressable>
               );

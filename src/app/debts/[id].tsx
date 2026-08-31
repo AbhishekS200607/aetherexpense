@@ -35,7 +35,7 @@ import { useAppStore } from '@/store/appStore';
 import { createDrizzleDB } from '@/database/client';
 import { formatCurrency, toPaise } from '@/utils/currency';
 import { todayISO } from '@/utils/dates';
-import { getDebtDetails, addDebtRepayment, deleteDebt } from '@/utils/debts';
+import { getDebtDetails, addDebtRepayment, deleteDebt, settleDebtInFull } from '@/utils/debts';
 import { getAccounts, type Account } from '@/utils/accounts';
 import type { Debt, DebtRepayment } from '@/types/debts';
 
@@ -151,6 +151,30 @@ export default function DebtDetailScreen() {
     } finally {
       setSubmittingRepay(false);
     }
+  };
+
+  const handleMarkPaidInFull = () => {
+    if (!sqliteDb || !id || !debtData) return;
+    Alert.alert(
+      'Mark as Paid in Full',
+      `Are you sure you want to mark "${debtData.title}" as fully settled (${formatCurrency(debtData.remainingAmount, currencyCode)})?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Mark Settled',
+          onPress: async () => {
+            try {
+              const db = createDrizzleDB(sqliteDb);
+              await settleDebtInFull(db, String(id), debtData.accountId, false);
+              invalidateData();
+              Alert.alert('Record Settled', 'This record has been marked as paid in full.');
+            } catch (err) {
+              console.error('[Debts] Error settling record:', err);
+            }
+          },
+        },
+      ]
+    );
   };
 
   if (loading) {
@@ -306,18 +330,43 @@ export default function DebtDetailScreen() {
             <Text style={styles.noteText}>"{debtData.note}"</Text>
           )}
 
-          {/* Action Button: Record Repayment */}
+          {/* Action Buttons: Record Repayment & Mark Paid in Full */}
           {!isSettled && (
-            <Pressable
-              onPress={() => setShowModal(true)}
-              style={({ pressed }) => [
-                styles.repayActionBtn,
-                pressed && { opacity: 0.9 },
-              ]}
-            >
-              <Ionicons name="cash-outline" size={18} color="#FFFFFF" />
-              <Text style={styles.repayActionText}>Record Repayment / Payment</Text>
-            </Pressable>
+            <View style={{ gap: 8, marginTop: 8 }}>
+              <Pressable
+                onPress={() => setShowModal(true)}
+                style={({ pressed }) => [
+                  styles.repayActionBtn,
+                  pressed && { opacity: 0.9 },
+                ]}
+              >
+                <Ionicons name="cash-outline" size={18} color="#FFFFFF" />
+                <Text style={styles.repayActionText}>Record Partial Repayment</Text>
+              </Pressable>
+
+              <Pressable
+                onPress={handleMarkPaidInFull}
+                style={({ pressed }) => [
+                  {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    backgroundColor: '#10B98115',
+                    borderColor: '#10B98150',
+                    borderWidth: 1,
+                    borderRadius: EthosRadius.md,
+                    paddingVertical: 10,
+                  },
+                  pressed && { opacity: 0.8 },
+                ]}
+              >
+                <Ionicons name="checkmark-circle-outline" size={18} color="#059669" />
+                <Text style={{ ...EthosTypography.labelMd, color: '#059669', fontWeight: '600' }}>
+                  Mark as Paid in Full
+                </Text>
+              </Pressable>
+            </View>
           )}
         </View>
 

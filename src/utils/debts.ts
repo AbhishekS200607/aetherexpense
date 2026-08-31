@@ -177,6 +177,30 @@ export async function addDebtRepayment(
 }
 
 /**
+ * Instantly marks a debt/loan as fully settled / paid in full.
+ */
+export async function settleDebtInFull(
+  db: DrizzleDB,
+  debtId: string,
+  accountId?: string | null,
+  adjustAccountBalance = false
+): Promise<void> {
+  const dRows = await db.select().from(debts).where(eq(debts.id, debtId));
+  if (dRows.length === 0) return;
+  const debt = dRows[0];
+  if (debt.remaining_amount <= 0 || debt.status === 'SETTLED') return;
+
+  await addDebtRepayment(db, {
+    debtId,
+    amountPaise:           debt.remaining_amount,
+    paymentDate:           todayISO(),
+    accountId:             accountId || null,
+    note:                  'Marked as Paid in Full',
+    adjustAccountBalance:  adjustAccountBalance,
+  });
+}
+
+/**
  * Fetches all Debts with optional filter.
  */
 export async function getDebtsList(
