@@ -23,6 +23,11 @@ export function toMinorUnits(displayValue: string | number, minorUnit = 2): numb
   return Math.round(parsed * Math.pow(10, minorUnit));
 }
 
+/** Alias for toMinorUnits for INR paise conversion */
+export function toPaise(displayValue: string | number, minorUnit = 2): number {
+  return toMinorUnits(displayValue, minorUnit);
+}
+
 /**
  * Convert integer minor units back to a decimal number.
  * e.g. 10050 with minorUnit=2  →  100.5

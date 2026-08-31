@@ -8,7 +8,7 @@
 
 import { eq, and, gte, lte, sql, desc, count } from 'drizzle-orm';
 import type { DrizzleDB } from '@/database/client';
-import { transactions, categories, budgets, accounts, bills } from '@/database/schema';
+import { transactions, categories, budgets, accounts, bills, debts } from '@/database/schema';
 import { currentMonthRange, todayISO, getMonthRange } from '@/utils/dates';
 import { formatCurrency } from '@/utils/currency';
 import { calculateAccountBalance } from '@/utils/accounts';
@@ -534,6 +534,73 @@ export async function parseNaturalLanguageQuery(
       salaryFromQuery ??
       (metrics.totalIncomePaise > 0 ? metrics.totalIncomePaise / 100 : 60000);
     return await generateSalaryBudgetRecommendation(db, salaryToUse, queryText, currencyCode);
+  }
+
+  // 0.5. Debt & Loan Query Handler ("how much do i owe", "who owes me", "my debts", "my loans", "pending payments")
+  if (
+    query.includes('debt') ||
+    query.includes('loan') ||
+    query.includes('borrow') ||
+    query.includes('lent') ||
+    query.includes('owe') ||
+    query.includes('pending payment') ||
+    query.includes('iou')
+  ) {
+    const allDebts = await db.select().from(debts);
+    const today = todayISO();
+
+    let totalLent = 0;
+    let totalBorrowed = 0;
+    let activeLentCount = 0;
+    let activeBorrowCount = 0;
+    let overdueCount = 0;
+    const activeDebtsSummary: string[] = [];
+
+    for (const d of allDebts) {
+      if (d.status !== 'SETTLED') {
+        const amtStr = formatCurrency(d.remaining_amount, currencyCode);
+        if (d.type === 'LENT') {
+          totalLent += d.remaining_amount;
+          activeLentCount++;
+          activeDebtsSummary.push(`• ${d.person_name} owes you ${amtStr} (${d.title})`);
+        } else {
+          totalBorrowed += d.remaining_amount;
+          activeBorrowCount++;
+          activeDebtsSummary.push(`• You owe ${d.person_name} ${amtStr} (${d.title})`);
+        }
+        if (d.due_date && d.due_date < today) {
+          overdueCount++;
+        }
+      }
+    }
+
+    const netPosition = totalLent - totalBorrowed;
+    const formattedLent = formatCurrency(totalLent, currencyCode);
+    const formattedBorrowed = formatCurrency(totalBorrowed, currencyCode);
+    const formattedNet = formatCurrency(Math.abs(netPosition), currencyCode);
+
+    let answerText = '';
+    if (activeLentCount === 0 && activeBorrowCount === 0) {
+      answerText = 'You currently have no active debts or pending loans! All your receivables and borrowings are fully settled.';
+    } else {
+      const netLabel = netPosition >= 0 ? `+${formattedNet} net positive receivable` : `-${formattedNet} net liability`;
+      answerText = `Debt & Loan Overview:\n• Total Owed to You: ${formattedLent} (${activeLentCount} active)\n• Total You Owe: ${formattedBorrowed} (${activeBorrowCount} active)\n• Net Position: ${netLabel}\n\nActive Records:\n${activeDebtsSummary.join('\n')}`;
+      if (overdueCount > 0) {
+        answerText += `\n\n⚠️ Notice: You have ${overdueCount} overdue record(s) requiring attention.`;
+      }
+    }
+
+    return {
+      intent:       'debts_loans_query',
+      questionText: queryText,
+      answerText:   answerText,
+      metrics: [
+        { label: 'Owed to You',  value: formattedLent },
+        { label: 'You Owe',      value: formattedBorrowed },
+        { label: 'Net Position', value: netPosition >= 0 ? `+${formattedNet}` : `-${formattedNet}` },
+      ],
+      supported: true,
+    };
   }
 
   // 1. Overspending Check & Actionable Insights ("am i overspending", "where spending too much")

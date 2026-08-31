@@ -29,6 +29,13 @@
       "when": 1788032916856,
       "tag": "0003_perpetual_mother_askani",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1788118800000,
+      "tag": "0004_debts_and_repayments",
+      "breakpoints": true
     }
   ]
 }

@@ -107,14 +107,21 @@ export default function SettingsScreen() {
           />
         </Section>
 
-        {/* Accounts & Wallets */}
-        <Section title="Accounts & Wallets">
+        {/* Accounts & Liabilities */}
+        <Section title="Accounts & Liabilities">
           <SettingRow
             id="settings-accounts"
             icon="wallet-outline"
             iconColor="#059669"
             label="Manage Accounts & Wallets"
             onPress={() => router.push('/accounts' as any)}
+          />
+          <SettingRow
+            id="settings-debts"
+            icon="cash-outline"
+            iconColor="#D97706"
+            label="Debt & Loan Tracking"
+            onPress={() => router.push('/debts' as any)}
             isLast
           />
         </Section>

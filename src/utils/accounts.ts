@@ -6,6 +6,16 @@
  * All monetary amounts are stored & processed as INTEGER minor units (paise).
  */
 
+import { eq } from 'drizzle-orm';
+import type { DrizzleDB } from '@/database/client';
+import { accounts, type AccountRow } from '@/database/schema';
+
+export type Account = AccountRow;
+
+export async function getAccounts(db: DrizzleDB): Promise<Account[]> {
+  return await db.select().from(accounts).where(eq(accounts.is_active, 1));
+}
+
 export interface TxnSummaryItem {
   id:                     string;
   type:                   'income' | 'expense' | 'transfer';

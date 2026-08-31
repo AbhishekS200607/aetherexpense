@@ -470,6 +470,23 @@ export default function RootLayout() {
                   headerShown: false,
                 }}
               />
+              <Stack.Screen
+                name="debts/index"
+                options={{ title: 'Debts & Loans', headerShown: false }}
+              />
+              <Stack.Screen
+                name="debts/add"
+                options={{
+                  title: 'Add Debt / Loan',
+                  presentation: 'modal',
+                  animation: 'slide_from_bottom',
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="debts/[id]"
+                options={{ title: 'Debt Details', headerShown: false }}
+              />
             </Stack>
           </View>
         </DatabaseInitializer>

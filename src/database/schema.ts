@@ -194,6 +194,36 @@ export const settings = sqliteTable('settings', {
   updated_at: text('updated_at').notNull(),
 });
 
+// ─── Debts & Loans ────────────────────────────────────────────────────────────
+
+export const debts = sqliteTable('debts', {
+  id:               text('id').primaryKey(),
+  title:            text('title').notNull(),
+  person_name:      text('person_name').notNull(),
+  type:             text('type', { enum: ['LENT', 'BORROWED'] }).notNull(),
+  total_amount:     integer('total_amount').notNull(), // minor units (paise)
+  remaining_amount: integer('remaining_amount').notNull(), // minor units (paise)
+  due_date:         text('due_date'), // YYYY-MM-DD
+  status:           text('status', { enum: ['PENDING', 'PARTIAL', 'SETTLED'] }).notNull().default('PENDING'),
+  account_id:       text('account_id').references(() => accounts.id),
+  note:             text('note'),
+  created_at:       text('created_at').notNull(),
+  updated_at:       text('updated_at').notNull(),
+});
+
+export const debtRepayments = sqliteTable('debt_repayments', {
+  id:             text('id').primaryKey(),
+  debt_id:        text('debt_id')
+                    .notNull()
+                    .references(() => debts.id, { onDelete: 'cascade' }),
+  amount:         integer('amount').notNull(), // minor units (paise)
+  payment_date:   text('payment_date').notNull(), // YYYY-MM-DD
+  account_id:     text('account_id').references(() => accounts.id),
+  note:           text('note'),
+  transaction_id: text('transaction_id').references(() => transactions.id),
+  created_at:     text('created_at').notNull(),
+});
+
 // ─── Type Inference ──────────────────────────────────────────────────────────
 
 export type CategoryRow           = typeof categories.$inferSelect;
@@ -210,3 +240,7 @@ export type RecurringInsert       = typeof recurringTransactions.$inferInsert;
 export type BudgetRow             = typeof budgets.$inferSelect;
 export type BudgetInsert          = typeof budgets.$inferInsert;
 export type SettingsRow           = typeof settings.$inferSelect;
+export type DebtRow               = typeof debts.$inferSelect;
+export type DebtInsert            = typeof debts.$inferInsert;
+export type DebtRepaymentRow      = typeof debtRepayments.$inferSelect;
+export type DebtRepaymentInsert   = typeof debtRepayments.$inferInsert;
