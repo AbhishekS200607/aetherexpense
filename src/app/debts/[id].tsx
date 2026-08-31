@@ -40,7 +40,10 @@ import { getAccounts, type Account } from '@/utils/accounts';
 import type { Debt, DebtRepayment } from '@/types/debts';
 
 export default function DebtDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams();
+  const rawId = params.id || params.slug;
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
+
   const sqliteDb = useSQLiteContext();
   const currencyCode = useSettingsStore((s) => s.currency);
   const invalidateData = useAppStore((s) => s.invalidateData);
@@ -64,9 +67,10 @@ export default function DebtDetailScreen() {
     async function loadData() {
       if (!sqliteDb || !id) return;
       try {
+        setLoading(true);
         const db = createDrizzleDB(sqliteDb);
         const [details, accs] = await Promise.all([
-          getDebtDetails(db, id),
+          getDebtDetails(db, String(id)),
           getAccounts(db),
         ]);
 
@@ -103,7 +107,7 @@ export default function DebtDetailScreen() {
             if (!sqliteDb || !id) return;
             try {
               const db = createDrizzleDB(sqliteDb);
-              await deleteDebt(db, id);
+              await deleteDebt(db, String(id));
               invalidateData();
               router.back();
             } catch (err) {
@@ -130,7 +134,7 @@ export default function DebtDetailScreen() {
       const amountPaise = toPaise(numAmount);
 
       await addDebtRepayment(db, {
-        debtId:                id,
+        debtId:                String(id),
         amountPaise:           amountPaise,
         paymentDate:           repayDate.trim() || todayISO(),
         accountId:             repayAccountId,
@@ -149,7 +153,7 @@ export default function DebtDetailScreen() {
     }
   };
 
-  if (loading || !debtData) {
+  if (loading) {
     return (
       <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
         <Stack.Screen options={{ headerShown: false }} />
@@ -161,6 +165,44 @@ export default function DebtDetailScreen() {
           <View style={{ width: 32 }} />
         </View>
         <ActivityIndicator size="large" color={EthosColors.primary} style={{ marginTop: 40 }} />
+      </SafeAreaView>
+    );
+  }
+
+  if (!debtData) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={styles.header}>
+          <Pressable onPress={() => router.back()} style={styles.navBtn} hitSlop={8}>
+            <Ionicons name="arrow-back" size={22} color={EthosColors.onSurface} />
+          </Pressable>
+          <Text style={styles.headerTitle}>Debt Details</Text>
+          <View style={{ width: 32 }} />
+        </View>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 }}>
+          <Ionicons name="alert-circle-outline" size={48} color={EthosColors.error} />
+          <Text style={{ ...EthosTypography.headlineLg, fontSize: 18, color: EthosColors.primary }}>
+            Record Not Found
+          </Text>
+          <Text style={{ ...EthosTypography.bodyMd, color: EthosColors.outline, textAlign: 'center' }}>
+            This debt or loan record may have been deleted or is unavailable.
+          </Text>
+          <Pressable
+            onPress={() => router.back()}
+            style={{
+              backgroundColor: EthosColors.primary,
+              borderRadius: EthosRadius.md,
+              paddingHorizontal: 20,
+              paddingVertical: 10,
+              marginTop: 8,
+            }}
+          >
+            <Text style={{ ...EthosTypography.labelMd, color: '#FFFFFF', fontWeight: '600' }}>
+              Go Back
+            </Text>
+          </Pressable>
+        </View>
       </SafeAreaView>
     );
   }
