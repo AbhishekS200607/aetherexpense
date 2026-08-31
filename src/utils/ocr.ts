@@ -123,14 +123,43 @@ const REJECT_LABELS = [
 ];
 
 /**
+ * Normalizes international currency numbers into a clean JS float.
+ * Handles both US/UK style (1,000.50) and European style (1.000,50 or 1 000,50).
+ */
+export function normalizeCurrencyNumber(rawStr: string): number {
+  if (!rawStr) return NaN;
+  let str = rawStr.trim();
+
+  // European format: 1.000,50 or 1 000,50
+  if (/^\d{1,3}(?:[\.\s]\d{3})*,\d{1,2}$/.test(str)) {
+    str = str.replace(/[\.\s]/g, '').replace(',', '.');
+  }
+  // Standard format: 1,000.50
+  else if (/^\d{1,3}(?:,\d{3})*\.\d{1,2}$/.test(str)) {
+    str = str.replace(/,/g, '');
+  }
+  // Simple decimal with comma: 1000,50
+  else if (/^\d+,\d{1,2}$/.test(str)) {
+    str = str.replace(',', '.');
+  }
+  // Standard digits with optional commas/dots
+  else {
+    str = str.replace(/,/g, '');
+  }
+
+  return parseFloat(str);
+}
+
+/**
  * Extracts and ranks all candidate monetary amounts from OCR raw text.
  */
 export function extractAndRankAmounts(rawText: string): AmountCandidate[] {
   const lines = rawText.split('\n').map((l) => l.trim()).filter(Boolean);
   const candidatesMap = new Map<number, AmountCandidate>();
+  const totalLines = lines.length;
 
-  // RegEx to capture monetary numbers (₹32,250 | Rs. 32,250 | 32250.00 | 32,250)
-  const moneyRegex = /(?:₹|rs\.?|inr)?\s*([\d]{1,3}(?:,[\d]{2,3})*(?:\.[\d]{1,2})?|[\d]{1,7}\.[\d]{2}|[\d]{3,7})/gi;
+  // RegEx to capture monetary numbers (₹32,250 | Rs. 32,250 | 1.000,50 | 32250.00 | 32,250)
+  const moneyRegex = /(?:₹|rs\.?|inr|\$|€|£)?\s*([\d]{1,3}(?:[,\.\s][\d]{3})*(?:[\.,][\d]{1,2})?|[\d]{1,7}[\.,][\d]{2}|[\d]{3,7})/gi;
 
   lines.forEach((line, lineIdx) => {
     // Check if line contains explicit reject keywords (e.g. Invoice No: 1500 or GSTIN)
@@ -140,13 +169,12 @@ export function extractAndRankAmounts(rawText: string): AmountCandidate[] {
     let match: RegExpExecArray | null;
     while ((match = moneyRegex.exec(line)) !== null) {
       const numStr = match[1];
-      const cleaned = numStr.replace(/,/g, '');
-      const parsed = parseFloat(cleaned);
+      const parsed = normalizeCurrencyNumber(numStr);
 
       if (isNaN(parsed) || parsed <= 0 || parsed > 5000000) continue;
 
-      // Avoid capturing isolated 4-digit years like 2026
-      if (parsed >= 2020 && parsed <= 2035 && !numStr.includes('.')) continue;
+      // Avoid capturing isolated 4-digit years like 2026 or date fragments
+      if (parsed >= 2020 && parsed <= 2035 && !numStr.includes('.') && !numStr.includes(',')) continue;
 
       const paise = Math.round(parsed * 100);
 
@@ -197,8 +225,13 @@ export function extractAndRankAmounts(rawText: string): AmountCandidate[] {
         }
       }
 
-      // Bonus if explicitly formatted with currency symbol ₹ or Rs
-      if (/₹|rs/i.test(line)) {
+      // Bonus for bottom-of-receipt positional placement (receipt totals appear near the bottom)
+      if (totalLines > 3 && lineIdx >= totalLines - Math.max(3, Math.floor(totalLines * 0.4))) {
+        score += 15;
+      }
+
+      // Bonus if explicitly formatted with currency symbol
+      if (/₹|rs|\$|€|£/i.test(line)) {
         score += 20;
       }
 

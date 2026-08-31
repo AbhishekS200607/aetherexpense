@@ -14,9 +14,11 @@ import { DEFAULT_SETTINGS } from '../types/settings';
 import { nowISO } from '../utils/dates';
 
 export async function seedDatabase(db: DrizzleDB): Promise<void> {
-  await seedCategories(db);
-  await seedSettings(db);
-  await seedAccounts(db);
+  await db.transaction(async (tx) => {
+    await seedCategories(tx as any);
+    await seedSettings(tx as any);
+    await seedAccounts(tx as any);
+  });
 }
 
 export async function cleanTestTransactions(db: DrizzleDB): Promise<void> {

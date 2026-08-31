@@ -10,11 +10,16 @@
     "ios": {
       "bundleIdentifier": "com.aether.expense",
       "supportsTablet": true,
-      "icon": "./assets/images/icon.png"
+      "icon": "./assets/images/icon.png",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow AetherExpense to use the camera to photograph physical receipts and invoices for offline OCR text extraction.",
+        "NSPhotoLibraryUsageDescription": "Allow AetherExpense to access your photo gallery to scan paper receipts, bills, and UPI payment screenshots for local expense tracking.",
+        "NSFaceIDUsageDescription": "Allow AetherExpense to use Face ID for secure offline app locking."
+      }
     },
     "android": {
       "package": "com.aether.expense",
-      "versionCode": 1,
+      "versionCode": 3,
       "adaptiveIcon": {
         "backgroundColor": "#053E54",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -29,8 +34,7 @@
         "android.permission.USE_FINGERPRINT",
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE",
-        "android.permission.POST_NOTIFICATIONS",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.POST_NOTIFICATIONS"
       ]
     },
     "web": {
@@ -62,14 +66,14 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow AetherExpense to access your photos to attach receipts.",
-          "cameraPermission": "Allow AetherExpense to use the camera to photograph receipts."
+          "photosPermission": "Allow AetherExpense to access your photo gallery to scan paper receipts, bills, and UPI payment screenshots for local expense tracking.",
+          "cameraPermission": "Allow AetherExpense to use the camera to photograph physical receipts and invoices for offline OCR text extraction."
         }
       ],
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "Allow AetherExpense to use Face ID for app lock."
+          "faceIDPermission": "Allow AetherExpense to use Face ID for secure offline app locking."
         }
       ],
       [

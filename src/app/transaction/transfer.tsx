@@ -91,28 +91,30 @@ export default function TransferScreen() {
 
     setSaving(true);
     try {
-      const db = createDrizzleDB(sqliteDb);
+      await sqliteDb.withTransactionAsync(async () => {
+        const db = createDrizzleDB(sqliteDb);
 
-      // Find or fallback a category for transfer
-      const cats = await db.select().from(categories).limit(1);
-      const defaultCatId = cats[0]?.id ?? 'default-cat';
+        // Find or fallback a category for transfer
+        const cats = await db.select().from(categories).limit(1);
+        const defaultCatId = cats[0]?.id ?? 'default-cat';
 
-      const now = nowISO();
-      await db.insert(transactions).values({
-        id:                     uuidv4(),
-        type:                   'transfer',
-        amount:                 toMinorUnits(amount),
-        category_id:            defaultCatId,
-        account_id:             fromAccountId,
-        transfer_to_account_id: toAccountId,
-        date,
-        time,
-        note:                   note.trim() || 'Account Transfer',
-        merchant:               null,
-        payment_method:         'bank',
-        is_recurring:           0,
-        created_at:             now,
-        updated_at:             now,
+        const now = nowISO();
+        await db.insert(transactions).values({
+          id:                     uuidv4(),
+          type:                   'transfer',
+          amount:                 toMinorUnits(amount),
+          category_id:            defaultCatId,
+          account_id:             fromAccountId,
+          transfer_to_account_id: toAccountId,
+          date,
+          time,
+          note:                   note.trim() || 'Account Transfer',
+          merchant:               null,
+          payment_method:         'bank',
+          is_recurring:           0,
+          created_at:             now,
+          updated_at:             now,
+        });
       });
 
       invalidateData();

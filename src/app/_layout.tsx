@@ -246,11 +246,11 @@ export default function RootLayout() {
     themeMode === 'system' ? colorScheme : themeMode;
   const colors = effectiveScheme === 'dark' ? DarkColors : LightColors;
 
-  // Memoized SQLiteProvider onInit handler to prevent Provider recreation on RootLayout re-renders
+  // Memoized SQLiteProvider onInit handler to set WAL mode, foreign keys, and pragma user_version
   const handleSQLiteInit = useCallback(async (db: any) => {
     console.log('[SQLITE] provider mounted / onInit executing');
-    await db.execAsync('PRAGMA journal_mode = WAL;');
-    await db.execAsync('PRAGMA foreign_keys = ON;');
+    const { configureDatabasePragmas } = await import('@/database/client');
+    await configureDatabasePragmas(db);
   }, []);
 
   useEffect(() => {

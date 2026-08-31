@@ -72,16 +72,15 @@ export async function createDebt(db: DrizzleDB, input: CreateDebtInput): Promise
     updated_at:       now,
   };
 
-  await db.insert(debts).values(newDebt);
+  await db.transaction(async (tx) => {
+    await tx.insert(debts).values(newDebt);
 
-  // If user opted to adjust account balance immediately on debt creation
-  if (input.adjustAccountBalance && input.accountId) {
-    try {
-      // Find or pick a default category for debt transactions
-      const cats = await db.select().from(categories).limit(1);
+    // If user opted to adjust account balance immediately on debt creation
+    if (input.adjustAccountBalance && input.accountId) {
+      const cats = await tx.select().from(categories).limit(1);
       const catId = cats[0]?.id || 'cat_other';
 
-      await db.insert(transactions).values({
+      await tx.insert(transactions).values({
         id:            generateUUID(),
         type:          input.type === 'LENT' ? 'expense' : 'income',
         amount:        input.totalAmountPaise,
@@ -95,10 +94,8 @@ export async function createDebt(db: DrizzleDB, input: CreateDebtInput): Promise
         created_at:    now,
         updated_at:    now,
       });
-    } catch (err) {
-      console.warn('[Debts] Error creating initial account transaction:', err);
     }
-  }
+  });
 
   return mapDebtRow(newDebt);
 }
@@ -120,15 +117,16 @@ export async function addDebtRepayment(
   const repaymentId = generateUUID();
   const now = todayISO();
   let transactionId: string | null = null;
+  let newRepaymentObj: any = null;
 
-  // Optional: Create transaction in account
-  if (input.adjustAccountBalance && input.accountId) {
-    try {
-      const cats = await db.select().from(categories).limit(1);
+  await db.transaction(async (tx) => {
+    // Optional: Create transaction in account
+    if (input.adjustAccountBalance && input.accountId) {
+      const cats = await tx.select().from(categories).limit(1);
       const catId = cats[0]?.id || 'cat_other';
       transactionId = generateUUID();
 
-      await db.insert(transactions).values({
+      await tx.insert(transactions).values({
         id:            transactionId,
         type:          currentDebt.type === 'LENT' ? 'income' : 'expense',
         amount:        input.amountPaise,
@@ -142,38 +140,36 @@ export async function addDebtRepayment(
         created_at:    now,
         updated_at:    now,
       });
-    } catch (err) {
-      console.warn('[Debts] Error creating repayment transaction:', err);
     }
-  }
 
-  // Insert repayment log
-  const newRepayment = {
-    id:             repaymentId,
-    debt_id:        input.debtId,
-    amount:         input.amountPaise,
-    payment_date:   input.paymentDate || now,
-    account_id:     input.accountId || null,
-    note:           input.note ? input.note.trim() : null,
-    transaction_id: transactionId,
-    created_at:     now,
-  };
-  await db.insert(debtRepayments).values(newRepayment);
+    // Insert repayment log
+    newRepaymentObj = {
+      id:             repaymentId,
+      debt_id:        input.debtId,
+      amount:         input.amountPaise,
+      payment_date:   input.paymentDate || now,
+      account_id:     input.accountId || null,
+      note:           input.note ? input.note.trim() : null,
+      transaction_id: transactionId,
+      created_at:     now,
+    };
+    await tx.insert(debtRepayments).values(newRepaymentObj);
 
-  // Recalculate remaining amount and status
-  const newRemaining = Math.max(0, currentDebt.remaining_amount - input.amountPaise);
-  const newStatus = newRemaining === 0 ? 'SETTLED' : 'PARTIAL';
+    // Recalculate remaining amount and status
+    const newRemaining = Math.max(0, currentDebt.remaining_amount - input.amountPaise);
+    const newStatus = newRemaining === 0 ? 'SETTLED' : 'PARTIAL';
 
-  await db
-    .update(debts)
-    .set({
-      remaining_amount: newRemaining,
-      status:           newStatus,
-      updated_at:       now,
-    })
-    .where(eq(debts.id, input.debtId));
+    await tx
+      .update(debts)
+      .set({
+        remaining_amount: newRemaining,
+        status:           newStatus,
+        updated_at:       now,
+      })
+      .where(eq(debts.id, input.debtId));
+  });
 
-  return mapRepaymentRow(newRepayment);
+  return mapRepaymentRow(newRepaymentObj);
 }
 
 /**

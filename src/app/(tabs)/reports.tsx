@@ -43,6 +43,7 @@ import {
 } from '@/theme/ethos';
 import { formatCurrency } from '@/utils/currency';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CHART_WIDTH = SCREEN_WIDTH - EthosSpacing.containerPadding * 2 - 32;
@@ -438,46 +439,48 @@ export default function ReportsScreen() {
         </View>
 
         {/* ─── Spending Trend SVG Chart ────────────────────────────────────── */}
-        <View style={styles.bentoCard}>
-          <View style={styles.cardHeaderRow}>
-            <Text style={styles.cardTitle}>Spending Trend</Text>
-            <View style={styles.rangeChip}>
-              <Text style={styles.rangeChipText}>{dateRangeLabel}</Text>
-            </View>
-          </View>
-
-          {trendData.length === 0 ? (
-            <EmptyState
-              icon="stats-chart-outline"
-              title="No spending data"
-              description="No expense transactions found for the selected date range."
-              style={{ paddingVertical: EthosSpacing.stackLg }}
-            />
-          ) : (
-            <View style={styles.chartWrap}>
-              <Svg width={CHART_WIDTH} height={CHART_HEIGHT}>
-                {/* Horizontal Dotted Grid Lines */}
-                <Line x1="0" y1="30" x2={CHART_WIDTH} y2="30" stroke="#E5E5E5" strokeDasharray="4 4" strokeWidth="1" />
-                <Line x1="0" y1="70" x2={CHART_WIDTH} y2="70" stroke="#E5E5E5" strokeDasharray="4 4" strokeWidth="1" />
-                <Line x1="0" y1="110" x2={CHART_WIDTH} y2="110" stroke="#E5E5E5" strokeDasharray="4 4" strokeWidth="1" />
-
-                {/* Smooth Spending Trend Line */}
-                <Path d={svgPathData} stroke={EthosColors.primary} strokeWidth="2.5" fill="none" />
-              </Svg>
-              <View style={styles.chartLabelsRow}>
-                <Text style={styles.chartLabelText}>
-                  {trendData[0]?.label || ''}
-                </Text>
-                <Text style={styles.chartLabelText}>
-                  {trendData[Math.floor(trendData.length / 2)]?.label || ''}
-                </Text>
-                <Text style={styles.chartLabelText}>
-                  {trendData[trendData.length - 1]?.label || ''}
-                </Text>
+        <ErrorBoundary fallbackTitle="Chart Error" fallbackMessage="Could not render spending trend graph due to a data rendering mismatch.">
+          <View style={styles.bentoCard}>
+            <View style={styles.cardHeaderRow}>
+              <Text style={styles.cardTitle}>Spending Trend</Text>
+              <View style={styles.rangeChip}>
+                <Text style={styles.rangeChipText}>{dateRangeLabel}</Text>
               </View>
             </View>
-          )}
-        </View>
+
+            {trendData.length === 0 ? (
+              <EmptyState
+                icon="stats-chart-outline"
+                title="No spending data"
+                description="No expense transactions found for the selected date range."
+                style={{ paddingVertical: EthosSpacing.stackLg }}
+              />
+            ) : (
+              <View style={styles.chartWrap}>
+                <Svg width={CHART_WIDTH} height={CHART_HEIGHT}>
+                  {/* Horizontal Dotted Grid Lines */}
+                  <Line x1="0" y1="30" x2={CHART_WIDTH} y2="30" stroke="#E5E5E5" strokeDasharray="4 4" strokeWidth="1" />
+                  <Line x1="0" y1="70" x2={CHART_WIDTH} y2="70" stroke="#E5E5E5" strokeDasharray="4 4" strokeWidth="1" />
+                  <Line x1="0" y1="110" x2={CHART_WIDTH} y2="110" stroke="#E5E5E5" strokeDasharray="4 4" strokeWidth="1" />
+
+                  {/* Smooth Spending Trend Line */}
+                  <Path d={svgPathData} stroke={EthosColors.primary} strokeWidth="2.5" fill="none" />
+                </Svg>
+                <View style={styles.chartLabelsRow}>
+                  <Text style={styles.chartLabelText}>
+                    {trendData[0]?.label || ''}
+                  </Text>
+                  <Text style={styles.chartLabelText}>
+                    {trendData[Math.floor(trendData.length / 2)]?.label || ''}
+                  </Text>
+                  <Text style={styles.chartLabelText}>
+                    {trendData[trendData.length - 1]?.label || ''}
+                  </Text>
+                </View>
+              </View>
+            )}
+          </View>
+        </ErrorBoundary>
 
         {/* ─── Expense Category Breakdown ──────────────────────────────────── */}
         <View style={styles.sectionWrap}>

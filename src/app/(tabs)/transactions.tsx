@@ -20,6 +20,7 @@ import {
   TextInput,
   StyleSheet,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -303,6 +304,10 @@ export default function TransactionsScreen() {
       <SectionList
         sections={sectionedData}
         keyExtractor={(item) => item.id}
+        initialNumToRender={15}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        removeClippedSubviews={Platform.OS === 'android'}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         refreshControl={

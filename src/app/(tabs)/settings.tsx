@@ -4,7 +4,7 @@
  * Uses the Ethos Design System matching the rest of the application (white surface aesthetic).
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSettingsStore } from '@/store/settingsStore';
-import { manualUpdateCheck } from '@/utils/updates';
+import { UpdateCheckerModal } from '@/components/settings/UpdateCheckerModal';
 import {
   EthosColors,
   EthosTypography,
@@ -80,6 +80,7 @@ function Section({ title, children }: SectionProps) {
 export default function SettingsScreen() {
   const currency = useSettingsStore((s) => s.currency);
   const dateFormat = useSettingsStore((s) => s.date_format);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -188,11 +189,17 @@ export default function SettingsScreen() {
             icon="cloud-download-outline"
             iconColor="#0284C7"
             label="Check for Updates"
-            onPress={manualUpdateCheck}
+            onPress={() => setShowUpdateModal(true)}
             isLast
           />
         </Section>
       </ScrollView>
+
+      {/* Animated Update Checker Modal */}
+      <UpdateCheckerModal
+        visible={showUpdateModal}
+        onClose={() => setShowUpdateModal(false)}
+      />
     </SafeAreaView>
   );
 }

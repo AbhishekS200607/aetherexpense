@@ -203,47 +203,49 @@ export async function restoreBackupData(db: DrizzleDB, payload: BackupPayload): 
   }
 
   try {
-    // 2. Clear existing child tables first to respect FK constraints
-    await db.delete(transactionTags);
-    await db.delete(transactions);
-    await db.delete(bills);
-    await db.delete(recurringTransactions);
-    await db.delete(budgets);
-    await db.delete(tags);
-    await db.delete(accounts);
-    await db.delete(categories);
-    await db.delete(settings);
+    await db.transaction(async (tx) => {
+      // 2. Clear existing child tables first to respect FK constraints
+      await tx.delete(transactionTags);
+      await tx.delete(transactions);
+      await tx.delete(bills);
+      await tx.delete(recurringTransactions);
+      await tx.delete(budgets);
+      await tx.delete(tags);
+      await tx.delete(accounts);
+      await tx.delete(categories);
+      await tx.delete(settings);
 
-    // 3. Insert parent tables first in safe dependency order
-    if (sList.length > 0) await db.insert(settings).values(sList);
-    if (cList.length > 0) await db.insert(categories).values(cList);
-    if (aList.length > 0) await db.insert(accounts).values(aList);
-    if (tagList.length > 0) await db.insert(tags).values(tagList);
-    if (bList.length > 0) await db.insert(budgets).values(bList);
-    if (rList.length > 0) await db.insert(recurringTransactions).values(rList);
+      // 3. Insert parent tables first in safe dependency order
+      if (sList.length > 0) await tx.insert(settings).values(sList);
+      if (cList.length > 0) await tx.insert(categories).values(cList);
+      if (aList.length > 0) await tx.insert(accounts).values(aList);
+      if (tagList.length > 0) await tx.insert(tags).values(tagList);
+      if (bList.length > 0) await tx.insert(budgets).values(bList);
+      if (rList.length > 0) await tx.insert(recurringTransactions).values(rList);
 
-    // 4. Restore bills & reschedule local device notifications
-    const today = todayISO();
-    if (billList.length > 0) {
-      for (const billItem of billList) {
-        // Clear stale notification_id and schedule fresh notification if due in future & unpaid
-        let freshNotifId: string | null = null;
-        if (billItem.is_paid === 0 && billItem.due_date >= today && billItem.is_active === 1) {
-          freshNotifId = await scheduleBillNotification(
-            billItem.id,
-            billItem.name,
-            `₹${(billItem.amount / 100).toFixed(2)}`,
-            billItem.due_date,
-            1
-          );
+      // 4. Restore bills & reschedule local device notifications
+      const today = todayISO();
+      if (billList.length > 0) {
+        for (const billItem of billList) {
+          // Clear stale notification_id and schedule fresh notification if due in future & unpaid
+          let freshNotifId: string | null = null;
+          if (billItem.is_paid === 0 && billItem.due_date >= today && billItem.is_active === 1) {
+            freshNotifId = await scheduleBillNotification(
+              billItem.id,
+              billItem.name,
+              `₹${(billItem.amount / 100).toFixed(2)}`,
+              billItem.due_date,
+              1
+            );
+          }
+          billItem.notification_id = freshNotifId;
         }
-        billItem.notification_id = freshNotifId;
+        await tx.insert(bills).values(billList);
       }
-      await db.insert(bills).values(billList);
-    }
 
-    if (tList.length > 0) await db.insert(transactions).values(tList);
-    if (ttList.length > 0) await db.insert(transactionTags).values(ttList);
+      if (tList.length > 0) await tx.insert(transactions).values(tList);
+      if (ttList.length > 0) await tx.insert(transactionTags).values(ttList);
+    });
 
     console.log('[Restore] Database restored cleanly from backup payload');
   } catch (err) {
@@ -256,18 +258,20 @@ export async function restoreBackupData(db: DrizzleDB, payload: BackupPayload): 
  * Resets entire database back to default production seed state.
  */
 export async function resetDatabaseToDefault(db: DrizzleDB): Promise<void> {
-  // Clear all data tables
-  await db.delete(transactionTags);
-  await db.delete(transactions);
-  await db.delete(bills);
-  await db.delete(recurringTransactions);
-  await db.delete(budgets);
-  await db.delete(tags);
-  await db.delete(accounts);
-  await db.delete(categories);
-  await db.delete(settings);
+  await db.transaction(async (tx) => {
+    // Clear all data tables
+    await tx.delete(transactionTags);
+    await tx.delete(transactions);
+    await tx.delete(bills);
+    await tx.delete(recurringTransactions);
+    await tx.delete(budgets);
+    await tx.delete(tags);
+    await tx.delete(accounts);
+    await tx.delete(categories);
+    await tx.delete(settings);
 
-  // Re-seed default production categories, accounts, and settings
-  await seedDatabase(db);
+    // Re-seed default production categories, accounts, and settings
+    await seedDatabase(tx as any);
+  });
   console.log('[Reset] Database reset to default production seed state.');
 }

@@ -114,31 +114,33 @@ export default function AssistantScreen() {
     }
   };
 
-  // Accept Suggested Budget (Inserts into SQLite budgets table)
+  // Accept Suggested Budget (Inserts into SQLite budgets table after explicit user confirmation)
   const handleAcceptBudget = async (sugg: SuggestedBudget) => {
     if (!sqliteDb) return;
     try {
-      const db = createDrizzleDB(sqliteDb);
-      const now = todayISO();
+      await sqliteDb.withTransactionAsync(async () => {
+        const db = createDrizzleDB(sqliteDb);
+        const now = todayISO();
 
-      // Deactivate existing budget for category if present
-      await db
-        .update(budgets)
-        .set({ is_active: 0 })
-        .where(eq(budgets.category_id, sugg.categoryId));
+        // Deactivate existing budget for category if present
+        await db
+          .update(budgets)
+          .set({ is_active: 0 })
+          .where(eq(budgets.category_id, sugg.categoryId));
 
-      // Insert new suggested budget
-      await db.insert(budgets).values({
-        id:          generateUUID(),
-        name:        `${sugg.categoryName} Budget`,
-        amount:      sugg.suggestedPaise,
-        period:      'monthly',
-        start_date:  now,
-        category_id: sugg.categoryId,
-        warn_at:     80,
-        is_active:   1,
-        created_at:  now,
-        updated_at:  now,
+        // Insert new suggested budget
+        await db.insert(budgets).values({
+          id:          generateUUID(),
+          name:        `${sugg.categoryName} Budget`,
+          amount:      sugg.suggestedPaise,
+          period:      'monthly',
+          start_date:  now,
+          category_id: sugg.categoryId,
+          warn_at:     80,
+          is_active:   1,
+          created_at:  now,
+          updated_at:  now,
+        });
       });
 
       invalidateData();

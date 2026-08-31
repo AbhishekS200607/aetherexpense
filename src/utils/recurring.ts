@@ -76,79 +76,81 @@ export async function processRecurringTransactions(db: DrizzleDB): Promise<numbe
 
     const now = nowISO();
 
-    for (const rule of dueRules) {
-      let currentDate = rule.next_run_date;
-      let iterations = 0;
-      const MAX_MISSED_ITERATIONS = 12; // Safety limit for multi-month catchup
+    await db.transaction(async (tx) => {
+      for (const rule of dueRules) {
+        let currentDate = rule.next_run_date;
+        let iterations = 0;
+        const MAX_MISSED_ITERATIONS = 12; // Safety limit for multi-month catchup
 
-      while (currentDate <= today && iterations < MAX_MISSED_ITERATIONS) {
-        iterations++;
+        while (currentDate <= today && iterations < MAX_MISSED_ITERATIONS) {
+          iterations++;
 
-        // 1. Duplicate Check: Check if transaction already exists for this rule & date
-        const existingTxn = await db
-          .select({ id: transactions.id })
-          .from(transactions)
-          .where(
-            and(
-              eq(transactions.recurring_id, rule.id),
-              eq(transactions.date, currentDate)
+          // 1. Duplicate Check: Check if transaction already exists for this rule & date
+          const existingTxn = await tx
+            .select({ id: transactions.id })
+            .from(transactions)
+            .where(
+              and(
+                eq(transactions.recurring_id, rule.id),
+                eq(transactions.date, currentDate)
+              )
             )
-          )
-          .limit(1);
+            .limit(1);
 
-        if (existingTxn.length === 0) {
-          // 2. Generate transaction
-          await db.insert(transactions).values({
-            id:                     generateUUID(),
-            type:                   rule.type,
-            amount:                 rule.amount,
-            category_id:            rule.category_id,
-            account_id:             rule.account_id,
-            transfer_to_account_id: null,
-            date:                   currentDate,
-            time:                   '09:00',
-            note:                   rule.note || rule.merchant || 'Recurring Payment',
-            merchant:               rule.merchant,
-            payment_method:         rule.payment_method,
-            is_recurring:           1,
-            recurring_id:           rule.id,
-            created_at:             now,
-            updated_at:             now,
-          });
-          generatedCount++;
+          if (existingTxn.length === 0) {
+            // 2. Generate transaction
+            await tx.insert(transactions).values({
+              id:                     generateUUID(),
+              type:                   rule.type,
+              amount:                 rule.amount,
+              category_id:            rule.category_id,
+              account_id:             rule.account_id,
+              transfer_to_account_id: null,
+              date:                   currentDate,
+              time:                   '09:00',
+              note:                   rule.note || rule.merchant || 'Recurring Payment',
+              merchant:               rule.merchant,
+              payment_method:         rule.payment_method,
+              is_recurring:           1,
+              recurring_id:           rule.id,
+              created_at:             now,
+              updated_at:             now,
+            });
+            generatedCount++;
+          }
+
+          // 3. Compute next occurrence date
+          const nextDate = calculateNextOccurrence(currentDate, rule.frequency as any);
+
+          // Check if end_date reached
+          if (rule.end_date && nextDate > rule.end_date) {
+            await tx
+              .update(recurringTransactions)
+              .set({
+                is_active:     0,
+                last_run_date: currentDate,
+                updated_at:    now,
+              })
+              .where(eq(recurringTransactions.id, rule.id));
+            break;
+          }
+
+          currentDate = nextDate;
         }
 
-        // 3. Compute next occurrence date
-        const nextDate = calculateNextOccurrence(currentDate, rule.frequency as any);
-
-        // Check if end_date reached
-        if (rule.end_date && nextDate > rule.end_date) {
-          await db
+        // Update recurring rule with new next_run_date
+        if (currentDate !== rule.next_run_date) {
+          await tx
             .update(recurringTransactions)
             .set({
-              is_active:     0,
-              last_run_date: currentDate,
+              last_run_date: rule.next_run_date,
+              next_run_date: currentDate,
               updated_at:    now,
             })
             .where(eq(recurringTransactions.id, rule.id));
-          break;
         }
-
-        currentDate = nextDate;
       }
-
-      // Update recurring rule with new next_run_date
-      if (currentDate !== rule.next_run_date) {
-        await db
-          .update(recurringTransactions)
-          .set({
-            last_run_date: rule.next_run_date,
-            next_run_date: currentDate,
-            updated_at:    now,
-          })
-          .where(eq(recurringTransactions.id, rule.id));
-      }
-    }
+    });
 
     if (generatedCount > 0) {
       console.log(`[RecurringEngine] Generated ${generatedCount} due transactions cleanly`);
