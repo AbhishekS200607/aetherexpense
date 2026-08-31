@@ -173,6 +173,7 @@ export default function RootLayout() {
 
   const [lockType, setLockTypeState] = useState<LockType>('off');
   const [securityChecked, setSecurityChecked] = useState(false);
+  const [showPrivacyShield, setShowPrivacyShield] = useState(false);
   const backgroundTimestamp = useRef<number | null>(null);
 
   // Security Lock State Synchronization (runs on Launch, Data Invalidation, & Lock Toggle)
@@ -197,18 +198,21 @@ export default function RootLayout() {
     syncSecurityLock();
   }, [dbReady, dataVersion, isLocked, setIsLocked, securityChecked]);
 
-  // AppState Listener for Background Auto-Lock Timer
+  // AppState Listener for Background Auto-Lock Timer & App Switcher Privacy Shield
   useEffect(() => {
     const sub = AppState.addEventListener('change', async (nextState) => {
       console.log(`[APPSTATE] state changed to: ${nextState}`);
-      const lType = await getLockType();
-      setLockTypeState(lType);
-      if (lType === 'off') return;
-
-      const delay = await getAutoLockDelay();
 
       if (nextState === 'background' || nextState === 'inactive') {
-        console.log('[APPSTATE] background or inactive');
+        // App Switcher Defense: Cover screen instantly to block OS screenshots
+        setShowPrivacyShield(true);
+
+        const lType = await getLockType();
+        setLockTypeState(lType);
+        if (lType === 'off') return;
+
+        const delay = await getAutoLockDelay();
+
         if (delay === 0) {
           console.log('[APPLOCK] locking (Immediate on background/inactive)');
           setIsLocked(true);
@@ -217,16 +221,21 @@ export default function RootLayout() {
         }
       } else if (nextState === 'active') {
         console.log('[APPSTATE] active');
-        if (backgroundTimestamp.current) {
-          const elapsedSec = (Date.now() - backgroundTimestamp.current) / 1000;
-          if (elapsedSec >= delay) {
-            console.log(`[APPLOCK] locking (Elapsed: ${elapsedSec}s >= Delay: ${delay}s)`);
-            setIsLocked(true);
-          } else {
-            console.log(`[APPLOCK] unlocked (Elapsed: ${elapsedSec}s < Delay: ${delay}s)`);
+        const lType = await getLockType();
+        setLockTypeState(lType);
+        if (lType !== 'off') {
+          const delay = await getAutoLockDelay();
+          if (backgroundTimestamp.current) {
+            const elapsedSec = (Date.now() - backgroundTimestamp.current) / 1000;
+            if (elapsedSec >= delay) {
+              console.log(`[APPLOCK] locking (Elapsed: ${elapsedSec}s >= Delay: ${delay}s)`);
+              setIsLocked(true);
+            }
           }
         }
         backgroundTimestamp.current = null;
+        // Warm Start Defense: Uncover privacy shield after security check complete
+        setShowPrivacyShield(false);
       }
     });
     return () => sub.remove();
@@ -292,6 +301,16 @@ export default function RootLayout() {
               lockType={lockType}
               onUnlock={() => setIsLocked(false)}
             />
+
+            {/* Privacy Shield Layer: Instantly covers app in App Switcher / Background */}
+            {showPrivacyShield && (
+              <View
+                style={[
+                  StyleSheet.absoluteFill,
+                  { backgroundColor: colors.background, zIndex: 99999 },
+                ]}
+              />
+            )}
             <Stack
               screenOptions={{
                 headerStyle: { backgroundColor: colors.surface },
