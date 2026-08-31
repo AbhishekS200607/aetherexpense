@@ -205,8 +205,33 @@ export function UpdateCheckerModal({ visible, onClose }: UpdateCheckerModalProps
 
               <Text style={styles.resultTitle}>App is Up to Date</Text>
               <Text style={styles.resultSubtext}>
-                You are running the latest production build of AetherExpense (v1.0.0). All financial ledgers and offline engines are operating cleanly.
+                You are running the latest version of AetherExpense (v1.0.0). All financial ledgers and offline engines are operating cleanly.
               </Text>
+
+              {/* Build Diagnostics Box */}
+              <View style={styles.changelogBox}>
+                <Text style={styles.changelogTitle}>Build Diagnostics:</Text>
+                <Text style={styles.changelogItem}>• Channel: {Updates.channel || 'preview'}</Text>
+                <Text style={styles.changelogItem}>• Runtime: {Updates.runtimeVersion || '1.0.0'}</Text>
+                <Text style={styles.changelogItem}>
+                  • Active Bundle: {Updates.updateId ? `${Updates.updateId.slice(0, 8)}...` : 'Initial Embedded Build'}
+                </Text>
+              </View>
+
+              <Pressable
+                onPress={handleDownloadAndReload}
+                disabled={downloading}
+                style={[styles.primaryBtn, { backgroundColor: EthosColors.surfaceContainerHigh, borderWidth: 1, borderColor: EthosBorder.color }]}
+              >
+                {downloading ? (
+                  <ActivityIndicator size="small" color={EthosColors.primary} />
+                ) : (
+                  <>
+                    <Ionicons name="refresh-outline" size={16} color={EthosColors.onSurface} />
+                    <Text style={[styles.primaryBtnText, { color: EthosColors.onSurface }]}>Force Fetch & Reload</Text>
+                  </>
+                )}
+              </Pressable>
 
               <Pressable onPress={onClose} style={styles.primaryBtn}>
                 <Text style={styles.primaryBtnText}>Done</Text>
