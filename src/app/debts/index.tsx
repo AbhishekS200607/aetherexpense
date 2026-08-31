@@ -383,18 +383,6 @@ export default function DebtsDashboardScreen() {
           </View>
         )}
       </ScrollView>
-
-      {/* Floating Add Button */}
-      <Pressable
-        onPress={() => router.push('/debts/add' as any)}
-        style={({ pressed }) => [
-          styles.fabBtn,
-          pressed && { opacity: 0.9 },
-        ]}
-      >
-        <Ionicons name="add" size={24} color="#FFFFFF" />
-        <Text style={styles.fabText}>Add Record</Text>
-      </Pressable>
     </SafeAreaView>
   );
 }
@@ -686,28 +674,6 @@ const styles = StyleSheet.create({
     marginTop:         8,
   },
   emptyAddText: {
-    ...EthosTypography.labelMd,
-    color:      '#FFFFFF',
-    fontWeight: '600',
-  },
-  fabBtn: {
-    position:        'absolute',
-    bottom:          24,
-    right:           24,
-    backgroundColor: EthosColors.primary,
-    borderRadius:    EthosRadius.full,
-    paddingHorizontal: 20,
-    paddingVertical:   14,
-    flexDirection:   'row',
-    alignItems:      'center',
-    gap:             8,
-    shadowColor:     EthosColors.primary,
-    shadowOffset:    { width: 0, height: 4 },
-    shadowOpacity:   0.3,
-    shadowRadius:    8,
-    elevation:       6,
-  },
-  fabText: {
     ...EthosTypography.labelMd,
     color:      '#FFFFFF',
     fontWeight: '600',

@@ -219,9 +219,11 @@ export default function AccountsScreen() {
               title={activeTab === 'active' ? 'No active accounts' : 'No archived accounts'}
               description={
                 activeTab === 'active'
-                  ? 'Tap Add Account to create your first wallet or bank account.'
+                  ? 'Create your first cash wallet, bank account, or UPI account to start tracking.'
                   : 'Archived accounts will appear here.'
               }
+              actionLabel={activeTab === 'active' ? 'Add Account / Wallet' : undefined}
+              onAction={activeTab === 'active' ? () => router.push('/accounts/add') : undefined}
             />
           ) : (
             filteredAccounts.map((acc) => {
