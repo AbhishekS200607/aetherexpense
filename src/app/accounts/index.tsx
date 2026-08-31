@@ -190,6 +190,31 @@ export default function AccountsScreen() {
           </View>
         </View>
 
+        {/* ─── Add Wallet / Account Action Banner ───────────────────────── */}
+        <Pressable
+          onPress={() => router.push('/accounts/add')}
+          style={({ pressed }) => [
+            {
+              flexDirection:     'row',
+              alignItems:        'center',
+              justifyContent:    'center',
+              gap:               8,
+              backgroundColor:   EthosColors.surfaceContainerLowest,
+              borderRadius:      EthosRadius.lg,
+              borderWidth:       EthosBorder.width,
+              borderColor:       EthosColors.primary + '30',
+              paddingVertical:   14,
+              paddingHorizontal: EthosSpacing.containerPadding,
+            },
+            pressed && { backgroundColor: EthosColors.surfaceContainerLow, opacity: 0.9 },
+          ]}
+        >
+          <Ionicons name="add-circle" size={20} color={EthosColors.primary} />
+          <Text style={{ ...EthosTypography.labelMd, color: EthosColors.primary, fontWeight: '600', fontSize: 14 }}>
+            Add New Wallet or Account
+          </Text>
+        </Pressable>
+
         {/* ─── Segmented Tabs (Active / Archived) ────────────────────────── */}
         <View style={styles.tabBarContainer}>
           <Pressable
